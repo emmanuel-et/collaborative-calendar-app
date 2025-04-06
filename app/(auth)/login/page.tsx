@@ -1,17 +1,26 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import Link from "next/link";
 import { auth } from '@/utils/firebase/initializeApp';
+import { useAuth } from '@/hooks/useAuth';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push('/dashboard');
+    }
+  }, [isAuthenticated, router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,7 +28,6 @@ const LoginPage = () => {
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      router.push("/"); // Redirect to home page for now
     } catch (err) {
       setError((err as Error).message || 'An error occurred during login.');
     }
