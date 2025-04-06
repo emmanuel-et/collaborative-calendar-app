@@ -35,7 +35,6 @@ const SignupPage = () => {
 
     try {
       await createUserWithEmailAndPassword(auth, email, password);
-      // The useAuth hook will handle setting the token and redirecting
     } catch (err) {
       setError((err as Error).message || 'An error occurred during sign-up.');
     }

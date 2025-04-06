@@ -28,7 +28,6 @@ const LoginPage = () => {
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      // The useAuth hook will handle setting the token and redirecting
     } catch (err) {
       setError((err as Error).message || 'An error occurred during login.');
     }
