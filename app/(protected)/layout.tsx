@@ -2,17 +2,18 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { signOut } from "firebase/auth";
-import { useRouter } from "next/navigation";
-import { auth } from '@/utils/firebase/initializeApp';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
+  const { signOut, loading } = useAuth();
 
-  const handleSignOut = async () => {
-    await signOut(auth);
-    router.push('/login');
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-purple-50 text-purple-800">
+        <p>Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -25,7 +26,7 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
             Dashboard
           </Link>
           <button
-            onClick={handleSignOut}
+            onClick={signOut}
             className="text-purple-800 font-medium hover:underline cursor-pointer"
           >
             Sign Out
