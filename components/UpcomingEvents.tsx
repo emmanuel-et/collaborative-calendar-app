@@ -3,12 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { Event } from '@/models/Event';
 import { useAuth } from '@/hooks/useAuth';
+import { GET } from '@/app/api/events/route';
+import { NextRequest } from 'next/server';
 
-interface CalendarProps {
+interface UpcomingEventsProps {
   onEventClick?: (event: Event) => void;
 }
 
-const Calendar: React.FC<CalendarProps> = ({ onEventClick }) => {
+const UpcomingEvents: React.FC<UpcomingEventsProps> = ({ onEventClick }) => {
   const { user } = useAuth();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,6 +48,7 @@ const Calendar: React.FC<CalendarProps> = ({ onEventClick }) => {
       onEventClick(event);
     }
   };
+
   
   if (loading) {
     return <div className="p-4 text-center">Loading calendar...</div>;
@@ -80,4 +83,4 @@ const Calendar: React.FC<CalendarProps> = ({ onEventClick }) => {
   );
 };
 
-export default Calendar; 
+export default UpcomingEvents; 

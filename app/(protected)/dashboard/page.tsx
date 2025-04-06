@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { User } from '@/models/User';
 import { Event } from '@/models/Event';
-import Calendar from '@/components/UpcomingEvents';
+import UpcomingEvents from '@/components/UpcomingEvents';
 import Link from 'next/link';
 
 function Dashboard() {
@@ -86,7 +86,7 @@ function Dashboard() {
             </Link>
           </div>
           
-          <Calendar onEventClick={handleEventClick} />
+          <UpcomingEvents onEventClick={handleEventClick} />
           
           {/* Event Details */}
           {selectedEvent && (
