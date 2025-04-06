@@ -34,7 +34,29 @@ const SignupPage = () => {
     }
 
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      // Create user in Firebase
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      
+      // Create user in MongoDB
+      const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          uid: user.uid,
+          email: user.email,
+          name: name,
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create user profile');
+      }
+      
+      // The useAuth hook will handle setting the token and redirecting
     } catch (err) {
       setError((err as Error).message || 'An error occurred during sign-up.');
     }
@@ -92,7 +114,7 @@ const SignupPage = () => {
           />
         </div>
         {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-        <Button variant="outline" disabled={!email || !password} className="w-full bg-purple-600 text-white hover:bg-purple-700">
+        <Button variant="outline" disabled={!email || !password || !name} className="w-full bg-purple-600 text-white hover:bg-purple-700">
           Sign Up
         </Button>
       </form>
