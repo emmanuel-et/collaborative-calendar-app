@@ -2,6 +2,7 @@ import { ObjectId } from 'mongodb';
 
 export interface Event {
   _id?: ObjectId;
+  calendarId: ObjectId;
   title: string;
   description?: string;
   startTime: Date;
@@ -16,6 +17,7 @@ export interface Event {
 }
 
 export interface EventInput {
+  calendarId: ObjectId;
   title: string;
   description?: string;
   startTime: Date;

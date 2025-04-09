@@ -5,6 +5,7 @@ export interface User {
   uid: string; // Firebase Auth UID
   email: string;
   name: string;
+  calendars?: ObjectId[];
   createdAt: Date;
   updatedAt: Date;
   preferences?: {
