@@ -5,11 +5,13 @@ export enum CalendarRole {
     EDITOR = "editor",
     VIEWER = "viewer"
 }
+
+export type Memberships = {
+    [id: string]: CalendarRole
+}
 export interface CalendarInput {
     name: string;
-    members: {
-        [userId: string]: CalendarRole
-    }
+    members: Memberships // [userId] -> role
 }
 
 export interface Calendar extends CalendarInput {
