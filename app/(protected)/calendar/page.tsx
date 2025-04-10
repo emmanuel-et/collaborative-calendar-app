@@ -6,6 +6,8 @@ import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { CalendarRole } from '@/models/Calendar'; // Adjust the path as needed
 import { momentLocalizer, View } from 'react-big-calendar';
+import InviteUserDialog from '@/components/calendar/InviteUserDialog';
+import { InviteNotificationInput } from '@/models/Notification';
 
 // Dynamically import the BigCalendar component
 const BigCalendar = dynamic(() => import('react-big-calendar').then((mod) => mod.Calendar), { ssr: false });
@@ -105,6 +107,26 @@ const CalendarPage = () => {
     return Object.keys(events).flatMap((calendarId) =>
       visibleCalendars[calendarId] ? events[calendarId].map((event) => ({ ...event, calendarId })) : []
     );
+  };
+
+  const handleSendInvite = async (inviteData: InviteNotificationInput) => {
+    console.log('Invite Data:', inviteData);
+    try {
+      const response = await fetch('/api/notifications?type=invite', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(inviteData),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to send invite notification.');
+      }
+  
+    } catch (error) {
+      console.error('Error sending invite:', error);
+    }
   };
 
   return (

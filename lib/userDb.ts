@@ -22,6 +22,13 @@ export async function getUserByUid(uid: string): Promise<User | null> {
   return db.collection('users').findOne<User>({ uid });
 }
 
+export async function getUserByEmail(email: string): Promise<User | null> {
+  const client = await clientPromise;
+  const db = client.db();
+  
+  return db.collection('users').findOne<User>({ email });
+}
+
 export async function updateUser(uid: string, userData: Partial<User>): Promise<User | null> {
   const client = await clientPromise;
   const db = client.db();

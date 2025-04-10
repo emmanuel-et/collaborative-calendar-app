@@ -1,6 +1,7 @@
 import clientPromise from '@/utils/mongodb';
 import { ObjectId } from 'mongodb';
-import { Notification, NotificationInput } from '@/models/Notification';
+import { InviteNotificationInput, Notification, NotificationInput, NotificationType } from '@/models/Notification';
+import { getUserByEmail, getUserByUid } from './userDb';
 
 export async function createNotification(notificationData: NotificationInput): Promise<Notification> {
   const client = await clientPromise;
@@ -13,11 +14,38 @@ export async function createNotification(notificationData: NotificationInput): P
     ...notificationData,
     createdAt: new Date(),
     updatedAt: new Date(),
-    read: false,
   };
 
   const result = await db.collection('notifications').insertOne(newNotification);
   return { ...newNotification, _id: result.insertedId };
+}
+
+export async function sendInviteNotification(inviteData: InviteNotificationInput) {
+  const user = await getUserByEmail(inviteData.email);
+  
+  if (!user) {
+    // User not found, do not send the notification
+    return;
+  }
+
+  const sender = await getUserByUid(inviteData.senderId);
+  if (!sender) {
+    throw new Error('Sender with the provided ID does not exist.');
+  }
+
+  // SENDER SHOULD NOT BE SAME AS USER
+  if (user.uid === sender.uid) {
+    return;
+  }
+
+  const notificationData: NotificationInput = {
+    userId: user.uid.toString(),
+    calendarId: new ObjectId(), // TODO: replace with actual calendarId
+    message: `You have been invited to a calendar by ${sender.name} with the role: ${inviteData.role}.`,
+    type: NotificationType.INVITE,
+  };
+
+  return await createNotification(notificationData);
 }
 
 export async function getNotificationsByUser(userId: string): Promise<Notification[]> {

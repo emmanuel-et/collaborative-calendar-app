@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import EventForm from '@/components/EventForm';
+import EventForm from '@/components/event/EventForm';
 import { EventInput } from '@/models/Event';
 import Link from 'next/link';
 
