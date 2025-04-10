@@ -1,173 +1,122 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import dynamic from 'next/dynamic';
-import moment from 'moment';
-import 'react-big-calendar/lib/css/react-big-calendar.css';
-import { CalendarRole } from '@/models/Calendar'; // Adjust the path as needed
-import { momentLocalizer, View } from 'react-big-calendar';
+import React, { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { Calendar, CalendarRole } from "@/models/Calendar";
+import { useRouter } from "next/navigation";
+import { CalendarScrollArea } from "@/components/calendar/CalendarScrollArea";
+import Link from "next/link";
 
-// Dynamically import the BigCalendar component
-const BigCalendar = dynamic(() => import('react-big-calendar').then((mod) => mod.Calendar), { ssr: false });
+export default function CalendarPage() {
+  const { user,  loading } = useAuth();
 
-// Mock data for demonstration
-const mockCalendars = {
-  [CalendarRole.OWNER]: [
-    { _id: '1', name: 'Work Calendar', memberships: ['user1', 'user2'] },
-    { _id: '2', name: 'Personal Calendar', memberships: ['user1'] },
-  ],
-  [CalendarRole.VIEWER]: [
-    { _id: '3', name: 'Team Calendar', memberships: ['user3', 'user4'] },
-    { _id: '4', name: 'Project Calendar', memberships: ['user5'] },
-  ],
-  [CalendarRole.EDITOR]: [
-    { _id: '5', name: 'Shared Calendar', memberships: ['user6', 'user7'] },
-    { _id: '6', name: 'Community Calendar', memberships: ['user8'] },
-  ],
-};
+  const [calendars, setCalendars] = useState<Record<CalendarRole, Calendar[]>>({
+    [CalendarRole.OWNER]: [],
+    [CalendarRole.EDITOR]: [],
+    [CalendarRole.VIEWER]: [],
+  } as Record<CalendarRole, Calendar[]>);
+  const [loadingPage, setLoadingPage] = useState(false);
+  const [error, setError] = useState("");
+  const router = useRouter();
 
-// Dummy events for testing
-const dummyEvents = {
-  '1': [{ title: 'Meeting', start: new Date(), end: new Date() }],
-  '2': [{ title: 'Gym', start: new Date(), end: new Date() }],
-  '3': [{ title: 'Team Sync', start: new Date(), end: new Date() }],
-  '4': [{ title: 'Deadline', start: new Date(), end: new Date() }],
-  '5': [{ title: 'Workshop', start: new Date(), end: new Date() }],
-  '6': [{ title: 'Event', start: new Date(), end: new Date() }],
-};
+  // const onSelectCalendar = (calendar: Calendar) => {
+  //   router.push(`/calendar/${calendar._id}`);
+  // };
+  
+  // const onCreateCalendar = () => {
+  //   router.push("/calendar/create");
+  // };
+  
+  // const onEditCalendar = (calendar: Calendar) => {
+  //   router.push(`/calendar/${calendar._id}/edit`);
+  // };
 
-const CalendarPage = () => {
-  const [expandedCategories, setExpandedCategories] = useState({
-    [CalendarRole.OWNER]: false,
-    [CalendarRole.VIEWER]: false,
-    [CalendarRole.EDITOR]: false,
-  });
-
-  const [visibleCategories, setVisibleCategories] = useState({
-    [CalendarRole.OWNER]: true,
-    [CalendarRole.VIEWER]: true,
-    [CalendarRole.EDITOR]: true,
-  });
-
-  const [visibleCalendars, setVisibleCalendars] = useState(
-    Object.keys(mockCalendars).reduce((acc, role) => {
-      mockCalendars[role].forEach((calendar) => {
-        acc[calendar._id] = true;
-      });
-      return acc;
-    }, {} as Record<string, boolean>)
-  );
-
-  const [events, setEvents] = useState<Record<string, any[]>>(dummyEvents);
-  const [view, setView] = useState<View>('month');
-  const [selectedCalendar, setSelectedCalendar] = useState<string | null>(null);
-  const [hoveredEvent, setHoveredEvent] = useState<string | null>(null);
-
-  const localizer = momentLocalizer(moment);
+  // const onDeleteCalendar = async (calendar: Calendar) => {
+  //   if (confirm("Are you sure you want to delete this calendar?")) {
+  //     try {
+  //       const id = calendar._id?.toString();
+  //       if (id) {
+  //         await deleteCalendar(id);
+  //       } else {
+  //         setError("Calendar ID is missing");
+  //       }
+  //     } catch (err) {
+  //       setError((err as Error).message);
+  //     }
+  //   }
+  // };
 
   useEffect(() => {
-    // Simulate fetching events for visible calendars
-    const fetchEvents = async () => {
-      const visibleCalendarIds = Object.keys(visibleCalendars).filter((id) => visibleCalendars[id]);
-      const fetchedEvents = visibleCalendarIds.reduce((acc, id) => {
-        acc[id] = dummyEvents[id] || []; // Replace with actual API call
-        return acc;
-      }, {} as Record<string, any[]>);
-      setEvents(fetchedEvents);
+    const fetchCalendars = async () => {
+      if (!user) return;
+      const calendars = await fetch("/api/calendar?userId=" + user.uid);
+      if (!calendars.ok) {
+        setError("Failed to fetch calendars.");
+        return;
+      }
+      const data = await calendars.json();
+      setCalendars({
+        [CalendarRole.OWNER]: data.filter((calendar: Calendar) => calendar.members[user.uid] === CalendarRole.OWNER),
+        [CalendarRole.EDITOR]: data.filter((calendar: Calendar) => calendar.members[user.uid] === CalendarRole.EDITOR),
+        [CalendarRole.VIEWER]: data.filter((calendar: Calendar) => calendar.members[user.uid] === CalendarRole.VIEWER),
+      });
+      setLoadingPage(false);
     };
 
-    fetchEvents();
-  }, [visibleCalendars]);
+    fetchCalendars();
+  }, [user]);
 
-  const toggleCategoryExpand = (role: CalendarRole) => {
-    setExpandedCategories((prev) => ({ ...prev, [role]: !prev[role] }));
-  };
+  // useEffect(() => {
+  //   console.log(user)
+  // }, [loading]);
 
-  const toggleCategoryVisibility = (role: CalendarRole) => {
-    const isVisible = !visibleCategories[role];
-    setVisibleCategories((prev) => ({ ...prev, [role]: isVisible }));
-
-    // Update visibility of all calendars under the category
-    setVisibleCalendars((prev) => {
-      const updated = { ...prev };
-      mockCalendars[role].forEach((calendar) => {
-        updated[calendar._id] = isVisible;
-      });
-      return updated;
-    });
-  };
-
-  const toggleCalendarVisibility = (calendarId: string) => {
-    setVisibleCalendars((prev) => ({ ...prev, [calendarId]: !prev[calendarId] }));
-  };
-
-  const getVisibleEvents = () => {
-    return Object.keys(events).flatMap((calendarId) =>
-      visibleCalendars[calendarId] ? events[calendarId].map((event) => ({ ...event, calendarId })) : []
+  if (loading || loadingPage) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-purple-50 text-purple-800">
+        <p>LoadingPage...</p>
+      </div>
     );
-  };
-
+  }
+  if (error) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-purple-50 text-purple-800">
+        <p className="text-red-500">{error}</p>
+      </div>
+    );
+  }
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '7fr 1fr', gap: '20px' }}>
-      <div style={{ height: '500px' }}>
-        <BigCalendar
-          localizer={localizer}
-          events={getVisibleEvents()}
-          startAccessor="start"
-          endAccessor="end"
-          view={view}
-          onView={(newView) => setView(newView)}
-          style={{ height: '100%' }}
-        />
+    <div className="min-h-screen p-6 bg-purple-50 text-purple-800">
+      <h1 className="text-3xl font-semibold mb-6">Calendars</h1>
+      <div className="flex gap-4 mb-6">
+        <Link
+          href="/calendar/create"
+          className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
+        >
+          Create Calendar
+        </Link>
+        <Link
+          href="/calendar/all"
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
+          View Combined Calendars
+        </Link>
       </div>
-      <div>
-        <h1>My Calendars</h1>
-        {Object.values(CalendarRole).map((role) => (
-          <div key={role}>
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <h2 onClick={() => toggleCategoryExpand(role)} style={{ cursor: 'pointer', marginRight: '10px' }}>
-                {role} Calendars {expandedCategories[role] ? '▼' : '▶'}
-              </h2>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={visibleCategories[role]}
-                  onChange={() => toggleCategoryVisibility(role)}
-                />
-                Show
-              </label>
-            </div>
-            {expandedCategories[role] && (
-              <ul style={{ paddingLeft: '20px' }}>
-                {mockCalendars[role].map((calendar) => (
-                  <li
-                    key={calendar._id}
-                    style={{
-                      marginLeft: '20px',
-                      fontWeight: hoveredEvent === calendar._id ? 'bold' : 'normal',
-                      backgroundColor: selectedCalendar === calendar._id ? '#ffcc00' : 'transparent',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                      <span style={{ marginRight: '10px' }}>{calendar.name}</span>
-                      <label>
-                        <input
-                          type="checkbox"
-                          checked={visibleCalendars[calendar._id]}
-                          onChange={() => toggleCalendarVisibility(calendar._id)}
-                        />
-                        Show
-                      </label>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        ))}
-      </div>
+      <ul className="pl-6 mb-6 space-y-4">
+        <li>
+          <h3 className="text-xl font-semibold mb-2">My Calendars</h3>
+          <CalendarScrollArea calendars={calendars[CalendarRole.OWNER]} onSelectCalendar={(calendar) => router.push(`/calendar/${calendar._id}`)} />
+        </li>
+        <li>
+          <h3 className="text-xl font-semibold mb-2">Shared Calendars</h3>
+          <CalendarScrollArea calendars={calendars[CalendarRole.EDITOR]} onSelectCalendar={(calendar) => router.push(`/calendar/${calendar._id}`)} />
+        </li>
+        <li>
+          <h3 className="text-xl font-semibold mb-2">Subscribed Calendars</h3>
+          <CalendarScrollArea calendars={calendars[CalendarRole.VIEWER]} onSelectCalendar={(calendar) => router.push(`/calendar/${calendar._id}`)} />
+        </li>
+      </ul>
     </div>
   );
-};
+  
+}
 
-export default CalendarPage;

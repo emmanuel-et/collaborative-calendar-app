@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.7",
+    "@radix-ui/react-scroll-area": "^1.2.4",
     "@radix-ui/react-slot": "^1.1.2",
     "@types/js-cookie": "^3.0.6",
     "class-variance-authority": "^0.7.1",
@@ -30,6 +31,7 @@
     "@types/mongodb": "^4.0.6",
     "@types/node": "^20.17.30",
     "@types/react": "^19.1.0",
+    "@types/react-big-calendar": "^1.16.1",
     "@types/react-dom": "^19.1.1",
     "tailwindcss": "^4",
     "typescript": "^5.8.3"

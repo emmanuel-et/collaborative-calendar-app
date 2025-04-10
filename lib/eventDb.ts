@@ -41,9 +41,15 @@ export async function getEventsByCalendar(calendarId: string): Promise<Event[]> 
   const client = await clientPromise;
   const db = client.db();
 
-  return db.collection('events')
-    .find<Event>({ calendarId: new ObjectId(calendarId) })
-    .toArray();
+  return db.collection('events').find<Event>({ calendarId: new ObjectId(calendarId) }).toArray();
+}
+
+export async function getEventsByCalendarIds(calendarIds: string[]): Promise<Event[]> {
+  const client = await clientPromise;
+  const db = client.db();
+
+  const objectIds = calendarIds.map(id => new ObjectId(id));
+  return db.collection('events').find<Event>({ calendarId: { $in: objectIds } }).toArray();
 }
 
 export async function updateEvent(eventId: string, eventData: Partial<Event>): Promise<Event | null> {

@@ -46,8 +46,8 @@ export async function updateCalendar(calendarId: string, calendarData: Partial<C
     { $set: updateData },
     { returnDocument: 'after' }
   );
-  
-  return result?.value || null;
+
+  return result as Calendar || null;
 }
 
 export async function deleteCalendar(calendarId: string): Promise<boolean> {
