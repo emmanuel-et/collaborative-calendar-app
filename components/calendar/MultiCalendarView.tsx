@@ -56,10 +56,8 @@ export default function MultiCalendarView({ calendars }: MultiCalendarViewProps)
         endTime: new Date(event.endTime),
       }));
       setEvents(events);
-      console.log(events);
     };
 
-    console.log(calendarStringIds)
     fetchEvents();
   }, []);
 

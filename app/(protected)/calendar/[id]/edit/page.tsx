@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { CalendarRole, Memberships } from "@/models/Calendar";
+import { User } from "@/models/User";
 
 export default function EditCalendarPage() {
     const { user } = useAuth();
@@ -14,21 +15,32 @@ export default function EditCalendarPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [members, setMembers] = useState<Memberships>({});
-//   const [memberEmails, setMemberEmails] = useState<Record<string, string>([]); // Store member emails
+  const [membersToUserMap, setMembersToUserMap] = useState<Record<string, User>>({}); // Store member emails
   const [newMemberEmail, setNewMemberEmail] = useState("");
 
   useEffect(() => {
-    const fetchCalendar = async () => {
+    const fetchCalendarAndMembers = async () => {
       try {
         setLoading(true);
         const res = await fetch(`/api/calendar/${id}`); // Use the GET route from route.ts
         if (!res.ok) {
           throw new Error("Failed to fetch calendar details.");
         }
+        console.log('a');
         const calendar = await res.json();
         setName(calendar.name);
         setRole(calendar.role);
         setMembers(calendar.members || {});
+        
+        // Fetch members
+        const membersRes = await Promise.all(Object.keys(calendar.members).map(uid => fetch(`/api/users?uid=${uid}`)));
+        const membersData = await Promise.all(membersRes.map(res => res.json()));
+        const membersMap: Record<string, User> = {};
+        membersData.forEach((member: User) => {
+          membersMap[member.uid] = member;
+        });
+        setMembersToUserMap(membersMap);
+        
       } catch (err) {
         setError((err as Error).message);
       } finally {
@@ -36,7 +48,7 @@ export default function EditCalendarPage() {
       }
     };
 
-    fetchCalendar();
+    fetchCalendarAndMembers();
 
   }, [id]);
 
@@ -49,7 +61,7 @@ export default function EditCalendarPage() {
       const res = await fetch(`/api/calendar/${id}`, {
         method: "PUT", // Use the PUT route from route.ts
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, members }),
+        body: JSON.stringify({ name, members: members }),
       });
 
       if (!res.ok) {
@@ -64,54 +76,32 @@ export default function EditCalendarPage() {
     }
   };
 
-  const handleAddMember = async () => {
+  const handleAddMember = () => {
     if (!newMemberEmail) return;
-    try {
-      setLoading(true);
-      const res = await fetch(`/api/calendar/${id}/members`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: newMemberEmail }),
-      });
 
-      if (!res.ok) {
-        throw new Error("Failed to add member.");
-      }
-
-      const updatedMembers = await res.json();
-      setMembers(updatedMembers);
-      setNewMemberEmail("");
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setLoading(false);
+    if (Object.values(membersToUserMap).some((user) => user.email === newMemberEmail)) {
+        setError("This member is already added.");
+        return;
     }
+
+    // need to make api call to get user by email
   };
+  const handleRemoveMember = (uid: string) => {
+    setMembers((prev) => {
+      const updatedMembers = { ...prev };
+      delete updatedMembers[uid];
+      return updatedMembers;
+    });
 
-  const handleRemoveMember = async (email: string) => {
-    try {
-      setLoading(true);
-      const res = await fetch(`/api/calendar/${id}/members`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to remove member.");
-      }
-
-      const updatedMembers = await res.json();
-      setMembers(updatedMembers);
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setLoading(false);
-    }
+    setMembersToUserMap((prev) => {
+      const updatedMap = { ...prev };
+      delete updatedMap[uid];
+      return updatedMap;
+    });
   };
 
   const handleRoleChange = (email: string, newRole: CalendarRole) => {
-    if (email === "currentUserEmail") {
+    if (email === user.email) {
       setError("You cannot reassign your own role.");
       return;
     }
@@ -183,14 +173,13 @@ export default function EditCalendarPage() {
           </div>
         </div>
         <ul>
-          {Object.keys(members).map((member) => ( member != user.uid && 
-            <li key={member} className="flex items-center justify-between mb-2">
-              <span>{member}</span>
+          {Object.keys(members).map((memberUid) => ( memberUid != user.uid && 
+            <li key={memberUid} className="flex items-center justify-between mb-2">
+              <span>{membersToUserMap[memberUid].email}</span>
               <div className="flex items-center">
                 <select
-                  value={members[member]}
-                  onChange={(e) => handleRoleChange(member, e.target.value as CalendarRole)}
-                  disabled={member === "currentUserEmail"}
+                  value={members[memberUid]}
+                  onChange={(e) => handleRoleChange(memberUid, e.target.value as CalendarRole)}
                   className="mr-2 rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
                 >
                   <option value={CalendarRole.EDITOR}>Editor</option>
@@ -198,7 +187,7 @@ export default function EditCalendarPage() {
                 </select>
                 <button
                   type="button"
-                  onClick={() => handleRemoveMember(member)}
+                  onClick={() => handleRemoveMember(memberUid)}
                   className="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700"
                 >
                   Remove
