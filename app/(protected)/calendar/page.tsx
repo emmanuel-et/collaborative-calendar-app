@@ -6,8 +6,6 @@ import { Calendar, CalendarRole } from "@/models/Calendar";
 import { useRouter } from "next/navigation";
 import { CalendarScrollArea } from "@/components/calendar/CalendarScrollArea";
 import Link from "next/link";
-import InviteUserDialog from '@/components/calendar/InviteUserDialog';
-import { InviteNotificationInput } from '@/models/Notification';
 
 export default function CalendarPage() {
   const { user,  loading } = useAuth();
@@ -48,26 +46,6 @@ export default function CalendarPage() {
   //   }
   // };
 
-  const handleSendInvite = async (inviteData: InviteNotificationInput) => {
-    console.log('Invite Data:', inviteData);
-    try {
-      const response = await fetch('/api/notifications?type=invite', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(inviteData),
-      });
-  
-      if (!response.ok) {
-        throw new Error('Failed to send invite notification.');
-      }
-  
-    } catch (error) {
-      console.error('Error sending invite:', error);
-    }
-  };
-  
   useEffect(() => {
     const fetchCalendars = async () => {
       if (!user) return;

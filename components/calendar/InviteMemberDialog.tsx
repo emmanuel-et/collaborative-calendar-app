@@ -22,11 +22,12 @@ import { CalendarRole } from "@/models/Calendar"
 import { useAuth } from '@/hooks/useAuth'
 import { InviteNotificationInput } from '@/models/Notification'
 
-interface InviteUserDialogProps {
+interface InviteMemberDialogProps {
   onSubmit: (inviteData: InviteNotificationInput) => void;
+  calendarId: string;
 }
 
-const InviteUserDialog: React.FC<InviteUserDialogProps> = ({ onSubmit }) => {
+const InviteMemberDialog: React.FC<InviteMemberDialogProps> = ({ onSubmit, calendarId }) => {
   const { user } = useAuth()
   const [open, setOpen] = React.useState(false)
   const [email, setEmail] = React.useState("")
@@ -48,7 +49,7 @@ const InviteUserDialog: React.FC<InviteUserDialogProps> = ({ onSubmit }) => {
     const inviteData: InviteNotificationInput = {
       email,
       role,
-      calendarId: "88lh6MyCorhyhWjiEANQ1UDKu6X2", // TODO: change to ObjectId, as well as the interface
+      calendarId,
       senderId: user?.uid,
     }
     onSubmit(inviteData)
@@ -58,13 +59,13 @@ const InviteUserDialog: React.FC<InviteUserDialogProps> = ({ onSubmit }) => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" onClick={() => setOpen(true)}>Invite User</Button>
+        <Button className="cursor-pointer" variant="outline" onClick={() => setOpen(true)}>Invite Member</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Invite User</DialogTitle>
+          <DialogTitle>Invite Member</DialogTitle>
           <DialogDescription>
-            Invite a new user to your calendar and select their role. Click "Send Invite" to send the invitation email.
+            Invite a new member to your calendar and select their role. Click "Send Invite" to send the invitation email.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -111,4 +112,4 @@ const InviteUserDialog: React.FC<InviteUserDialogProps> = ({ onSubmit }) => {
   )
 }
 
-export default InviteUserDialog
+export default InviteMemberDialog

@@ -2,6 +2,7 @@ import clientPromise from '@/utils/mongodb';
 import { ObjectId } from 'mongodb';
 import { InviteNotificationInput, Notification, NotificationInput, NotificationType } from '@/models/Notification';
 import { getUserByEmail, getUserByUid } from './userDb';
+import { getCalendarById } from './db';
 
 export async function createNotification(notificationData: NotificationInput): Promise<Notification> {
   const client = await clientPromise;
@@ -38,10 +39,12 @@ export async function sendInviteNotification(inviteData: InviteNotificationInput
     return;
   }
 
+  const calendar = await getCalendarById(inviteData.calendarId);
+
   const notificationData: NotificationInput = {
     userId: user.uid.toString(),
-    calendarId: new ObjectId(), // TODO: replace with actual calendarId
-    message: `You have been invited to a calendar by ${sender.name} with the role: ${inviteData.role}.`,
+    calendarId: new ObjectId(inviteData.calendarId),
+    message: `You have been invited to a calendar, ${calendar?.name}, by ${sender.name} with the role: ${inviteData.role}.`,
     type: NotificationType.INVITE,
   };
 
