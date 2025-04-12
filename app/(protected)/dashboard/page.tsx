@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { User } from '@/models/User';
 import { Event } from '@/models/Event';
-import UpcomingEvents from '@/components/UpcomingEvents';
+import UpcomingEvents from '@/components/event/UpcomingEvents';
 import Link from 'next/link';
 
 function Dashboard() {

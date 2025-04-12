@@ -5,11 +5,14 @@ import { useRouter, useParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { CalendarRole, Memberships } from "@/models/Calendar";
 import { User } from "@/models/User";
+import InviteMemberDialog from '@/components/calendar/InviteMemberDialog';
+import { InviteNotificationInput } from '@/models/Notification';
 
 export default function EditCalendarPage() {
     const { user } = useAuth();
   const router = useRouter();
   const { id } = useParams(); // Get the calendar ID from the URL
+  const calendarId = String(id); // Cast id to string
   const [name, setName] = useState("");
   const [role, setRole] = useState<CalendarRole>(CalendarRole.OWNER);
   const [error, setError] = useState("");
@@ -22,11 +25,10 @@ export default function EditCalendarPage() {
     const fetchCalendarAndMembers = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`/api/calendar/${id}`); // Use the GET route from route.ts
+        const res = await fetch(`/api/calendar/${calendarId}`); // Use the GET route from route.ts
         if (!res.ok) {
           throw new Error("Failed to fetch calendar details.");
         }
-        console.log('a');
         const calendar = await res.json();
         setName(calendar.name);
         setRole(calendar.role);
@@ -50,7 +52,7 @@ export default function EditCalendarPage() {
 
     fetchCalendarAndMembers();
 
-  }, [id]);
+  }, [calendarId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,7 +60,7 @@ export default function EditCalendarPage() {
     setError("");
 
     try {
-      const res = await fetch(`/api/calendar/${id}`, {
+      const res = await fetch(`/api/calendar/${calendarId}`, {
         method: "PUT", // Use the PUT route from route.ts
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, members: members }),
@@ -68,7 +70,7 @@ export default function EditCalendarPage() {
         throw new Error("Failed to update calendar. Please try again.");
       }
 
-      router.push(`/calendar/${id}`);
+      router.push(`/calendar/${calendarId}`);
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -86,6 +88,31 @@ export default function EditCalendarPage() {
 
     // need to make api call to get user by email
   };
+
+  const handleSendInvite = async (inviteData: InviteNotificationInput) => {
+    if (Object.values(membersToUserMap).some((user) => user.email === inviteData.email)) {
+      setError("This member is already added.");
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/notifications?type=invite', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(inviteData),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to send invite notification.');
+      }
+  
+    } catch (error) {
+      console.error('Error sending invite:', error);
+    }
+  };
+
   const handleRemoveMember = (uid: string) => {
     setMembers((prev) => {
       const updatedMembers = { ...prev };
@@ -151,26 +178,10 @@ export default function EditCalendarPage() {
       <div className="mt-6 w-full max-w-md bg-white p-6 rounded shadow-md">
         <h2 className="text-lg font-semibold mb-4">Manage Members</h2>
         <div className="mb-4">
-          <label htmlFor="newMemberEmail" className="block text-sm font-medium text-gray-700">
-            Add Member
-          </label>
-          <div className="flex mt-1">
-            <input
-              id="newMemberEmail"
-              type="email"
-              value={newMemberEmail}
-              onChange={(e) => setNewMemberEmail(e.target.value)}
-              placeholder="Enter email"
-              className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
-            />
-            <button
-              type="button"
-              onClick={handleAddMember}
-              className="ml-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-            >
-              Add
-            </button>
-          </div>
+          <InviteMemberDialog 
+            onSubmit={handleSendInvite} 
+            calendarId={calendarId}
+          />
         </div>
         <ul>
           {Object.keys(members).map((memberUid) => ( memberUid != user.uid && 
