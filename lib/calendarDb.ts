@@ -50,6 +50,24 @@ export async function updateCalendar(calendarId: string, calendarData: Partial<C
   return result as Calendar || null;
 }
 
+export async function addMemberToCalendar(calendarId: string, userId: string, role: string): Promise<Calendar | null> {
+  const client = await clientPromise;
+  const db = client.db();
+
+  const updateData = {
+    [`members.${userId}`]: role,
+    updatedAt: new Date(),
+  };
+
+  const result = await db.collection('calendar').findOneAndUpdate(
+    { _id: new ObjectId(calendarId) },
+    { $set: updateData },
+    { returnDocument: 'after' }
+  );
+
+  return result?.value as Calendar || null;
+}
+
 export async function deleteCalendar(calendarId: string): Promise<boolean> {
   const client = await clientPromise;
   const db = client.db();

@@ -31,6 +31,12 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
           >
             Calendar
           </Link>
+          <Link
+            href="/notifications"
+            className="block mb-4 text-purple-800 font-medium hover:underline"
+          >
+            Notifications
+          </Link>
           <button
             onClick={signOut}
             className="text-purple-800 font-medium hover:underline cursor-pointer"

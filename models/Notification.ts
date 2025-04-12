@@ -21,6 +21,6 @@ export interface Notification extends NotificationInput {
 export interface InviteNotificationInput {
   email: string;
   role: string;
-  calendarId: string; // TODO: change to ObjectId
+  calendarId: string;
   senderId: string;
 }
