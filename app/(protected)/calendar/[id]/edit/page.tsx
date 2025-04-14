@@ -68,13 +68,20 @@ export default function EditCalendarPage() {
 
     try {
       const res = await fetch(`/api/calendar/${calendarId}`, {
-        method: "PUT", // Use the PUT route from route.ts
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, members: members }),
       });
 
+      if (res.status === 403) {
+      
+        router.push(`/calendar/${calendarId}`);
+        return;
+      }
+
       if (!res.ok) {
-        throw new Error("Failed to update calendar. Please try again.");
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to update calendar. Please try again.");
       }
 
       router.push(`/calendar/${calendarId}`);
