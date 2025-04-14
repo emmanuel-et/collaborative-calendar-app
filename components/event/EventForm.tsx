@@ -1,48 +1,58 @@
 "use client";
 
-import React, { useState } from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { Button } from '@/components/ui/button';
-import { EventInput } from '@/models/Event';
+import React, { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { EventInput } from "@/models/Event";
 
 interface EventFormProps {
+  calendarId: string;
   onSubmit: (event: EventInput) => void;
   initialData?: Partial<EventInput>;
   isEdit?: boolean;
 }
 
-const EventForm: React.FC<EventFormProps> = ({ onSubmit, initialData = {}, isEdit = false }) => {
+const EventForm: React.FC<EventFormProps> = ({
+  calendarId,
+  onSubmit,
+  initialData = {},
+  isEdit = false,
+}) => {
   const { user } = useAuth();
-  const [title, setTitle] = useState(initialData.title || '');
-  const [description, setDescription] = useState(initialData.description || '');
+  const [title, setTitle] = useState(initialData.title || "");
+  const [description, setDescription] = useState(initialData.description || "");
   const [startTime, setStartTime] = useState(
-    initialData.startTime ? new Date(initialData.startTime).toISOString().slice(0, 16) : ''
+    initialData.startTime
+      ? new Date(initialData.startTime).toISOString().slice(0, 16)
+      : ""
   );
   const [endTime, setEndTime] = useState(
-    initialData.endTime ? new Date(initialData.endTime).toISOString().slice(0, 16) : ''
+    initialData.endTime
+      ? new Date(initialData.endTime).toISOString().slice(0, 16)
+      : ""
   );
-  const [location, setLocation] = useState(initialData.location || '');
+  const [location, setLocation] = useState(initialData.location || "");
   const [isAllDay, setIsAllDay] = useState(initialData.isAllDay || false);
-  const [color, setColor] = useState(initialData.color || '#9333ea'); // Default purple
-  const [error, setError] = useState('');
+  const [color, setColor] = useState(initialData.color || "#9333ea"); // Default purple
+  const [error, setError] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
     // Validate form
     if (!title) {
-      setError('Title is required');
+      setError("Title is required");
       return;
     }
 
     if (!startTime) {
-      setError('Start time is required');
+      setError("Start time is required");
       return;
     }
 
     if (!endTime) {
-      setError('End time is required');
+      setError("End time is required");
       return;
     }
 
@@ -50,12 +60,13 @@ const EventForm: React.FC<EventFormProps> = ({ onSubmit, initialData = {}, isEdi
     const endDate = new Date(endTime);
 
     if (endDate < startDate) {
-      setError('End time must be after start time');
+      setError("End time must be after start time");
       return;
     }
 
     // Create event data
     const eventData: EventInput = {
+      calendarId,
       title,
       description,
       startTime: startDate,
@@ -63,8 +74,8 @@ const EventForm: React.FC<EventFormProps> = ({ onSubmit, initialData = {}, isEdi
       location,
       isAllDay,
       color,
-      createdBy: user?.uid || '',
-      participants: [user?.uid || ''], // Initially just the creator
+      createdBy: user?.uid || "",
+      participants: [user?.uid || ""], // Initially just the creator
     };
 
     onSubmit(eventData);
@@ -73,7 +84,7 @@ const EventForm: React.FC<EventFormProps> = ({ onSubmit, initialData = {}, isEdi
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && <p className="text-red-500">{error}</p>}
-      
+
       <div>
         <label htmlFor="title" className="block text-sm font-medium mb-1">
           Title *
@@ -87,7 +98,7 @@ const EventForm: React.FC<EventFormProps> = ({ onSubmit, initialData = {}, isEdi
           required
         />
       </div>
-      
+
       <div>
         <label htmlFor="description" className="block text-sm font-medium mb-1">
           Description
@@ -100,7 +111,7 @@ const EventForm: React.FC<EventFormProps> = ({ onSubmit, initialData = {}, isEdi
           rows={3}
         />
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label htmlFor="startTime" className="block text-sm font-medium mb-1">
@@ -115,7 +126,7 @@ const EventForm: React.FC<EventFormProps> = ({ onSubmit, initialData = {}, isEdi
             required
           />
         </div>
-        
+
         <div>
           <label htmlFor="endTime" className="block text-sm font-medium mb-1">
             End Time *
@@ -130,7 +141,7 @@ const EventForm: React.FC<EventFormProps> = ({ onSubmit, initialData = {}, isEdi
           />
         </div>
       </div>
-      
+
       <div>
         <label htmlFor="location" className="block text-sm font-medium mb-1">
           Location
@@ -143,7 +154,7 @@ const EventForm: React.FC<EventFormProps> = ({ onSubmit, initialData = {}, isEdi
           className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
         />
       </div>
-      
+
       <div className="flex items-center">
         <input
           type="checkbox"
@@ -156,7 +167,7 @@ const EventForm: React.FC<EventFormProps> = ({ onSubmit, initialData = {}, isEdi
           All Day Event
         </label>
       </div>
-      
+
       <div>
         <label htmlFor="color" className="block text-sm font-medium mb-1">
           Color
@@ -169,15 +180,15 @@ const EventForm: React.FC<EventFormProps> = ({ onSubmit, initialData = {}, isEdi
           className="w-full h-10 p-1 border rounded"
         />
       </div>
-      
+
       <Button
         type="submit"
         className="w-full bg-purple-600 text-white hover:bg-purple-700"
       >
-        {isEdit ? 'Update Event' : 'Create Event'}
+        {isEdit ? "Update Event" : "Create Event"}
       </Button>
     </form>
   );
 };
 
-export default EventForm; 
+export default EventForm;

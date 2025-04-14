@@ -1,4 +1,4 @@
-import { ObjectId } from 'mongodb';
+import { ObjectId } from "mongodb";
 
 export interface Event {
   _id?: ObjectId;
@@ -17,7 +17,7 @@ export interface Event {
 }
 
 export interface EventInput {
-  calendarId: ObjectId;
+  calendarId: string;
   title: string;
   description?: string;
   startTime: Date;
@@ -27,4 +27,4 @@ export interface EventInput {
   participants: string[]; // Firebase UIDs
   isAllDay: boolean;
   color?: string;
-} 
+}

@@ -1,28 +1,38 @@
 "use client";
 
-import { Calendar as BigCalendar, momentLocalizer, View } from 'react-big-calendar';
-import { Calendar } from '@/models/Calendar';
-import moment from 'moment';
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Event } from '@/models/Event';
-import 'react-big-calendar/lib/css/react-big-calendar.css';
+import {
+  Calendar as BigCalendar,
+  momentLocalizer,
+  View,
+} from "react-big-calendar";
+import { Calendar } from "@/models/Calendar";
+import moment from "moment";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Event } from "@/models/Event";
+import "react-big-calendar/lib/css/react-big-calendar.css";
 
 interface MultiCalendarViewProps {
   calendars: Calendar[];
 }
 
-export default function MultiCalendarView({ calendars }: MultiCalendarViewProps) {
+export default function MultiCalendarView({
+  calendars,
+}: MultiCalendarViewProps) {
   const router = useRouter();
-  const calendarStringIds = calendars.map((calendar) => calendar._id?.toString()).filter((id) => id !== undefined);
+  const calendarStringIds = calendars
+    .map((calendar) => calendar._id?.toString())
+    .filter((id) => id !== undefined);
 
   const localizer = momentLocalizer(moment);
-  const [view, setView] = useState<View>('month');
+  const [view, setView] = useState<View>("month");
   const [date, setDate] = useState(new Date());
   const [events, setEvents] = useState<Event[]>([]);
   const [hoveredEvent, setHoveredEvent] = useState<Object | null>(null);
   const [selectedCalendar, setSelectedCalendar] = useState<string | null>(null);
-  const [visibleCalendars, setVisibleCalendars] = useState<Record<string, boolean>>(
+  const [visibleCalendars, setVisibleCalendars] = useState<
+    Record<string, boolean>
+  >(
     calendarStringIds.reduce((acc: Record<string, boolean>, id: string) => {
       acc[id] = true;
       return acc;
@@ -31,7 +41,10 @@ export default function MultiCalendarView({ calendars }: MultiCalendarViewProps)
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const toggleCalendarVisibility = (calendarId: string) => {
-    setVisibleCalendars((prev) => ({ ...prev, [calendarId]: !prev[calendarId] }));
+    setVisibleCalendars((prev) => ({
+      ...prev,
+      [calendarId]: !prev[calendarId],
+    }));
   };
 
   const toggleAllCalendars = (isVisible: boolean) => {
@@ -49,8 +62,14 @@ export default function MultiCalendarView({ calendars }: MultiCalendarViewProps)
 
   useEffect(() => {
     const fetchEvents = async () => {
-      let events = (await Promise.all(calendarStringIds.map(id => fetch('/api/events?calendarId=' + id).then(res => res.json())))).flat();
-      events = events.map(event => ({
+      let events = (
+        await Promise.all(
+          calendarStringIds.map((id) =>
+            fetch("/api/events?calendarId=" + id).then((res) => res.json())
+          )
+        )
+      ).flat();
+      events = events.map((event) => ({
         ...event,
         startTime: new Date(event.startTime),
         endTime: new Date(event.endTime),
@@ -64,7 +83,11 @@ export default function MultiCalendarView({ calendars }: MultiCalendarViewProps)
   return (
     <div
       className=" p-6 bg-purple-50 text-purple-800"
-      style={{ display: 'grid', gridTemplateColumns: '7fr min-content', gap: '20px' }}
+      style={{
+        display: "grid",
+        gridTemplateColumns: "7fr min-content",
+        gap: "20px",
+      }}
     >
       <div>
         <BigCalendar
@@ -76,54 +99,67 @@ export default function MultiCalendarView({ calendars }: MultiCalendarViewProps)
           date={date}
           onNavigate={(newDate: Date) => setDate(newDate)}
           onView={(newView: View) => setView(newView)}
-          onSelectEvent={(event: React.SyntheticEvent) => setSelectedCalendar(null)}
+          onSelectEvent={(event: React.SyntheticEvent) =>
+            setSelectedCalendar(null)
+          }
           onSelectSlot={(slotInfo: Object) => setHoveredEvent(slotInfo)}
         />
       </div>
-      {calendars.length > 1 && <div
-        className={`transition-all duration-300 ${
-          isCollapsed ? 'w-12 overflow-hidden' : 'max-w-xs'
-        } bg-white shadow-md rounded`}
-      >
-        <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="w-full bg-purple-600 text-white py-2 rounded-t hover:bg-purple-700"
+      {calendars.length > 1 && (
+        <div
+          className={`transition-all duration-300 ${
+            isCollapsed ? "w-12 overflow-hidden" : "max-w-xs"
+          } bg-white shadow-md rounded`}
         >
-          {isCollapsed ? '>' : '<'}
-        </button>
-        {calendars.length > 1 && !isCollapsed && (
-          <div className="p-4">
-            <h2 className="text-lg font-semibold mb-2">Toggle Calendars</h2>
-            <button
-              onClick={() => toggleAllCalendars(true)}
-              className="mb-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-            >
-              Show All
-            </button>
-            <button
-              onClick={() => toggleAllCalendars(false)}
-              className="mb-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-            >
-              Hide All
-            </button>
-            <ul>
-              {calendars.map((calendar) => (
-                <li key={calendar._id?.toString() || ''} className="flex items-center mb-2">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={visibleCalendars[calendar._id?.toString() || '']}
-                      onChange={() => toggleCalendarVisibility(calendar._id?.toString() || '')}
-                      className="mr-2"
-                    />
-                    {calendar.name}
-                  </label>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>}
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="w-full bg-purple-600 text-white py-2 rounded-t hover:bg-purple-700"
+          >
+            {isCollapsed ? ">" : "<"}
+          </button>
+          {calendars.length > 1 && !isCollapsed && (
+            <div className="p-4">
+              <h2 className="text-lg font-semibold mb-2">Toggle Calendars</h2>
+              <button
+                onClick={() => toggleAllCalendars(true)}
+                className="mb-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+              >
+                Show All
+              </button>
+              <button
+                onClick={() => toggleAllCalendars(false)}
+                className="mb-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+              >
+                Hide All
+              </button>
+              <ul>
+                {calendars.map((calendar) => (
+                  <li
+                    key={calendar._id?.toString() || ""}
+                    className="flex items-center mb-2"
+                  >
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={
+                          visibleCalendars[calendar._id?.toString() || ""]
+                        }
+                        onChange={() =>
+                          toggleCalendarVisibility(
+                            calendar._id?.toString() || ""
+                          )
+                        }
+                        className="mr-2"
+                      />
+                      {calendar.name}
+                    </label>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

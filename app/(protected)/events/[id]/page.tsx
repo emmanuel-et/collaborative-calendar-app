@@ -1,38 +1,44 @@
 "use client";
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/useAuth';
-import EventForm from '@/components/event/EventForm';
-import { EventInput } from '@/models/Event';
-import Link from 'next/link';
+import React, { useState } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
+import EventForm from "@/components/event/EventForm";
+import { EventInput } from "@/models/Event";
+import Link from "next/link";
 
 export default function NewEventPage() {
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { loading } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
+
+  const { id } = useParams();
+
+  if (typeof id !== "string") {
+    throw new Error("Invalid id parameter");
+  }
 
   const handleSubmit = async (eventData: EventInput) => {
     setIsSubmitting(true);
-    setError('');
+    setError("");
 
     try {
-      const response = await fetch('/api/events', {
-        method: 'POST',
+      const response = await fetch("/api/events", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(eventData),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create event');
+        throw new Error(errorData.error || "Failed to create event");
       }
 
       // Redirect to dashboard on success
-      router.push('/dashboard');
+      router.push("/dashboard");
     } catch (err) {
       setError((err as Error).message);
       setIsSubmitting(false);
@@ -67,8 +73,8 @@ export default function NewEventPage() {
         )}
 
         <div className="bg-white p-6 rounded shadow-md">
-          <EventForm onSubmit={handleSubmit} />
-          
+          <EventForm calendarId={id} onSubmit={handleSubmit} />
+
           {isSubmitting && (
             <div className="mt-4 text-center text-purple-600">
               Creating event...
@@ -78,4 +84,4 @@ export default function NewEventPage() {
       </div>
     </div>
   );
-} 
+}
