@@ -67,11 +67,12 @@ export default function CalendarDashboardPage() {
         {calendar && calendar.members[user.uid] !== CalendarRole.VIEWER && (
           <div className="flex gap-4">
             <Link
-              href="/event/create"
+              href={`/events/${id}`}
               className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
             >
               Create Event
             </Link>
+
             <Link
               href={`/calendar/${id}/edit`}
               className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
