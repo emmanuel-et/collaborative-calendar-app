@@ -30,6 +30,13 @@ export default function EditCalendarPage() {
           throw new Error("Failed to fetch calendar details.");
         }
         const calendar = await res.json();
+        
+        // Check if user has permission to edit
+        if (calendar.members[user.uid] === CalendarRole.VIEWER) {
+          router.push(`/calendar/${calendarId}`);
+          return;
+        }
+        
         setName(calendar.name);
         setRole(calendar.role);
         setMembers(calendar.members || {});
@@ -52,7 +59,7 @@ export default function EditCalendarPage() {
 
     fetchCalendarAndMembers();
 
-  }, [calendarId]);
+  }, [calendarId, user.uid, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
