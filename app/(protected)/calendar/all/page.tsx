@@ -3,6 +3,7 @@
 import MultiCalendarView from "@/components/calendar/MultiCalendarView";
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import Link from "next/link";
 
 export default function CombinedCalendarPage() {
     const { user } = useAuth();
@@ -56,7 +57,22 @@ export default function CombinedCalendarPage() {
     }
     return (
         <div className="min-h-screen p-6 bg-purple-50 text-purple-800 flex flex-col">
-            <h1 className="text-2xl font-bold mb-4">Combined Calendar View</h1>
+            <div className="flex justify-between items-center mb-6">
+                <h1 className="text-3xl font-bold mb-6">Combined Calendar View</h1>
+                <div className="flex gap-4 mb-6">
+                    <Link
+                        href='/events/new'
+                        className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                        Create Event
+                    </Link>
+                    <Link
+                        href="/calendar/create"
+                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                        Create Calendar
+                    </Link>
+                </div>
+            </div>
+            
             <div className="grid flex-1">
                 <MultiCalendarView calendars={calendars} />
             </div>

@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { EventInput } from "@/models/Event";
+import { Calendar, CalendarRole } from "@/models/Calendar";
 
 interface EventFormProps {
-  calendarId: string;
+  calendarId?: string;
   onSubmit: (event: EventInput) => void;
   initialData?: Partial<EventInput>;
   isEdit?: boolean;
@@ -34,7 +35,44 @@ const EventForm: React.FC<EventFormProps> = ({
   const [location, setLocation] = useState(initialData.location || "");
   const [isAllDay, setIsAllDay] = useState(initialData.isAllDay || false);
   const [color, setColor] = useState(initialData.color || "#9333ea"); // Default purple
+  const [selectedCalendarIdx, setSelectedCalendarIdx] = useState(-1);
+  const [calendars, setCalendars] = useState<Calendar[]>([]);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const fetchCalendars = async () => {
+      if (!user) return;
+      try {
+        const response = await fetch(`/api/calendar?userId=${user.uid}`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch calendars.");
+        }
+        const data = await response.json();
+        setCalendars(data);
+        if (!calendarId && data.length > 0) {
+          setSelectedCalendarIdx(0); // Default to the first calendar if none is provided
+        } else {
+          const calendarIndex = data.findIndex(
+            (calendar: Calendar) => calendar._id?.toString() === calendarId
+          );
+
+          if (calendarIndex !== -1) {
+            if (data[calendarIndex].members[user.uid] === CalendarRole.VIEWER) {
+              setError("You do not have permission to create events in this calendar.");
+              return;
+            }
+            setSelectedCalendarIdx(calendarIndex);
+          } else {
+            setError("Calendar not found");
+          }
+        }
+      } catch (err) {
+        setError((err as Error).message);
+      }
+    };
+
+    fetchCalendars();
+  }, [user, calendarId]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,9 +102,14 @@ const EventForm: React.FC<EventFormProps> = ({
       return;
     }
 
+    if (selectedCalendarIdx < 0 || selectedCalendarIdx >= calendars.length || !calendars[selectedCalendarIdx] || !calendars[selectedCalendarIdx]._id?.toString()) {
+      setError("Please select a calendar");
+      return;
+    }
+
     // Create event data
     const eventData: EventInput = {
-      calendarId,
+      calendarId: calendars[selectedCalendarIdx]._id?.toString(),
       title,
       description,
       startTime: startDate,
@@ -84,6 +127,25 @@ const EventForm: React.FC<EventFormProps> = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && <p className="text-red-500">{error}</p>}
+
+      <div>
+        <label htmlFor="calendar" className="block text-sm font-medium mb-1">
+          Calendar *
+        </label>
+        <select
+          id="calendar"
+          value={selectedCalendarIdx}
+          onChange={(e) => setSelectedCalendarIdx(parseInt(e.target.value))}
+          className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
+          required
+        >
+          {calendars.map((calendar, i) => (
+            <option key={calendar._id?.toString()} value={i}>
+              {calendar.name}
+            </option>
+          ))}
+        </select>
+      </div>
 
       <div>
         <label htmlFor="title" className="block text-sm font-medium mb-1">

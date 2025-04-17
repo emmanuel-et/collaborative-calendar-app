@@ -8,8 +8,8 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const eventId = params.id;
-    const event = await getEventById(eventId);
+    const { id } = await params;
+    const event = await getEventById(id);
     
     if (!event) {
       return NextResponse.json({ error: 'Event not found' }, { status: 404 });
@@ -28,10 +28,10 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
-    const eventId = params.id;
+    const { id } = await params;
     const updateData: Partial<Event> = await request.json();
     
-    const updatedEvent = await updateEvent(eventId, updateData);
+    const updatedEvent = await updateEvent(id, updateData);
     
     if (!updatedEvent) {
       return NextResponse.json({ error: 'Event not found' }, { status: 404 });
@@ -50,8 +50,8 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const eventId = params.id;
-    const success = await deleteEvent(eventId);
+    const { id } = await params;
+    const success = await deleteEvent(id);
     
     if (!success) {
       return NextResponse.json({ error: 'Event not found' }, { status: 404 });
