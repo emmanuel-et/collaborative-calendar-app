@@ -1,134 +1,130 @@
 "use client";
 
-import React, { useState } from "react";
-import EventForm from "@/components/event/EventForm";
-import { Event } from "@/models/Event";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import React, { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
+import { Calendar, CalendarRole } from "@/models/Calendar";
+import { Event } from "@/models/Event";
+import { ClientEvent, ClientEventInput } from "@/models/ClientEvent";
+import EventForm from "./EventForm";
 
 interface EventDialogProps {
-  event: Event | null;
+  event?: Event;
+  calendarId?: string;
+  isOpen: boolean;
   onClose: () => void;
-  onUpdate: (updatedEvent: Event) => void;
-  onDelete: (eventId: string) => void;
+  onSave: (event: ClientEventInput) => void;
+  onDelete?: () => void;
 }
 
-const EventDialog: React.FC<EventDialogProps> = ({ event, onClose, onUpdate, onDelete }) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const router = useRouter();
+const EventDialog: React.FC<EventDialogProps> = ({
+  event,
+  calendarId,
+  isOpen,
+  onClose,
+  onSave,
+  onDelete,
+}) => {
+  const { user } = useAuth();
+  const [clientEvent, setClientEvent] = useState<ClientEvent | undefined>();
+  const [calendar, setCalendar] = useState<Calendar | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  if (!event) return null;
+  useEffect(() => {
+    if (event) {
+      // Convert server Event to client Event
+      setClientEvent({
+        _id: event._id?.toString() || "",
+        calendarId: event.calendarId?.toString() || "",
+        title: event.title,
+        description: event.description || "",
+        startTime: event.startTime,
+        endTime: event.endTime,
+        location: event.location || "",
+        createdBy: event.createdBy,
+        participants: event.participants,
+        isAllDay: event.isAllDay,
+        color: event.color,
+        createdAt: event.createdAt,
+        updatedAt: event.updatedAt,
+      });
+    } else {
+      setClientEvent(undefined);
+    }
+  }, [event]);
 
-  const handleUpdate = (updatedEventData: Partial<Event>) => {
-    const updatedEvent = { ...event, ...updatedEventData };
-    onUpdate(updatedEvent);
-    setIsEditing(false);
-  };
+  useEffect(() => {
+    const fetchCalendar = async () => {
+      if (!calendarId || !user) return;
+      try {
+        const response = await fetch(`/api/calendar/${calendarId}`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch calendar");
+        }
+        const data = await response.json();
+        setCalendar(data);
+      } catch (err) {
+        setError((err as Error).message);
+      }
+    };
 
-  const handleDelete = () => {
-    if (confirm("Are you sure you want to delete this event?")) {
-      onDelete(event._id?.toString() || "");
+    fetchCalendar();
+  }, [calendarId, user]);
+
+  const handleUpdate = async (updatedEvent: ClientEventInput) => {
+    setIsLoading(true);
+    setError("");
+
+    try {
+      // Convert client Event to server Event format
+      const serverEvent = {
+        ...updatedEvent,
+        calendarId: updatedEvent.calendarId,
+      };
+
+      onSave(serverEvent);
       onClose();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleExpand = () => {
-    router.push(`/events/${event._id}`);
-  };
+  const canEdit = calendar?.members[user?.uid || ""] !== CalendarRole.VIEWER;
 
   return (
-    <Dialog open={!!event} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{isEditing ? "Edit Event" : "Event Details"}</DialogTitle>
-          <DialogDescription>
-            {isEditing
-              ? "Update the details of your event and click 'Save Changes' to apply."
-              : "View the details of your event. You can edit or delete it if needed."}
-          </DialogDescription>
+          <DialogTitle>
+            {clientEvent ? "Edit Event" : "Create Event"}
+          </DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          {isEditing ? (
-            <EventForm
-              calendarId={event.calendarId}
-              initialData={event}
-              onSubmit={handleUpdate}
-              isEdit={true}
-            />
-          ) : (
-            <>
-              <div>
-                <strong>Title:</strong> {event.title}
-              </div>
-              <div>
-                <strong>Description:</strong> {event.description || "No description"}
-              </div>
-              <div>
-                <strong>Start:</strong> {new Date(event.startTime).toLocaleString()}
-              </div>
-              <div>
-                <strong>End:</strong> {new Date(event.endTime).toLocaleString()}
-              </div>
-              <div>
-                <strong>Location:</strong> {event.location || "No location"}
-              </div>
-              <div>
-                <strong>All Day:</strong> {event.isAllDay ? "Yes" : "No"}
-              </div>
-            </>
-          )}
-        </div>
-        <DialogFooter>
-          <Button
-            type="button"
-            onClick={handleExpand}
-            className="bg-green-600 text-white hover:bg-green-700"
-          >
-            Expand
-          </Button>
-          {isEditing ? (
+
+        {error && <p className="text-red-500 mb-4">{error}</p>}
+
+        <EventForm
+          calendarId={calendarId}
+          onSubmit={handleUpdate}
+          initialData={clientEvent}
+          isEdit={!!clientEvent}
+        />
+
+        {clientEvent && canEdit && onDelete && (
+          <div className="mt-4">
             <Button
-              type="button"
-              onClick={() => setIsEditing(false)}
-              className="bg-gray-300 text-gray-800 hover:bg-gray-400"
+              variant="destructive"
+              onClick={onDelete}
+              disabled={isLoading}
+              className="w-full"
             >
-              Cancel
+              Delete Event
             </Button>
-          ) : (
-            <>
-              <Button
-                type="button"
-                onClick={() => setIsEditing(true)}
-                className="bg-blue-600 text-white hover:bg-blue-700"
-              >
-                Edit
-              </Button>
-              <Button
-                type="button"
-                onClick={handleDelete}
-                className="bg-red-600 text-white hover:bg-red-700"
-              >
-                Delete
-              </Button>
-            </>
-          )}
-          <Button
-            type="button"
-            onClick={onClose}
-            className="bg-gray-300 text-gray-800 hover:bg-gray-400"
-          >
-            Close
-          </Button>
-        </DialogFooter>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

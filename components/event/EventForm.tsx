@@ -3,13 +3,13 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { EventInput } from "@/models/Event";
+import { ClientEventInput } from "@/models/ClientEvent";
 import { Calendar, CalendarRole } from "@/models/Calendar";
 
 interface EventFormProps {
   calendarId?: string;
-  onSubmit: (event: EventInput) => void;
-  initialData?: Partial<EventInput>;
+  onSubmit: (event: ClientEventInput) => void;
+  initialData?: Partial<ClientEventInput>;
   isEdit?: boolean;
 }
 
@@ -108,7 +108,7 @@ const EventForm: React.FC<EventFormProps> = ({
     }
 
     // Create event data
-    const eventData: EventInput = {
+    const eventData: ClientEventInput = {
       calendarId: calendars[selectedCalendarIdx]._id?.toString(),
       title,
       description,
@@ -174,34 +174,32 @@ const EventForm: React.FC<EventFormProps> = ({
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label htmlFor="startTime" className="block text-sm font-medium mb-1">
-            Start Time *
-          </label>
-          <input
-            type="datetime-local"
-            id="startTime"
-            value={startTime}
-            onChange={(e) => setStartTime(e.target.value)}
-            className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
-            required
-          />
-        </div>
+      <div>
+        <label htmlFor="startTime" className="block text-sm font-medium mb-1">
+          Start Time *
+        </label>
+        <input
+          type="datetime-local"
+          id="startTime"
+          value={startTime}
+          onChange={(e) => setStartTime(e.target.value)}
+          className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
+          required
+        />
+      </div>
 
-        <div>
-          <label htmlFor="endTime" className="block text-sm font-medium mb-1">
-            End Time *
-          </label>
-          <input
-            type="datetime-local"
-            id="endTime"
-            value={endTime}
-            onChange={(e) => setEndTime(e.target.value)}
-            className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
-            required
-          />
-        </div>
+      <div>
+        <label htmlFor="endTime" className="block text-sm font-medium mb-1">
+          End Time *
+        </label>
+        <input
+          type="datetime-local"
+          id="endTime"
+          value={endTime}
+          onChange={(e) => setEndTime(e.target.value)}
+          className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
+          required
+        />
       </div>
 
       <div>
