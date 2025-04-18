@@ -6,6 +6,7 @@ import { User } from '@/models/User';
 import { Event } from '@/models/Event';
 import UpcomingEvents from '@/components/event/UpcomingEvents';
 import Link from 'next/link';
+import { Calendar, CalendarRole } from '@/models/Calendar';
 
 function Dashboard() {
   const { user, loading } = useAuth();
@@ -13,6 +14,7 @@ function Dashboard() {
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [error, setError] = useState('');
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [hasEditAccess, setHasEditAccess] = useState(false);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -35,6 +37,29 @@ function Dashboard() {
     };
     
     fetchUserProfile();
+  }, [user]);
+
+  useEffect(() => {
+    const checkEditAccess = async () => {
+      if (!user) return;
+      try {
+        const response = await fetch(`/api/calendar?userId=${user.uid}`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch calendars.");
+        }
+        const data = await response.json();
+        // Check if user has edit access to any calendar
+        const hasAccess = data.some((calendar: Calendar) => 
+          calendar.members[user.uid] === CalendarRole.EDITOR || 
+          calendar.members[user.uid] === CalendarRole.OWNER
+        );
+        setHasEditAccess(hasAccess);
+      } catch (err) {
+        console.error("Error checking edit access:", err);
+      }
+    };
+
+    checkEditAccess();
   }, [user]);
 
   const handleEventClick = (event: Event) => {
@@ -78,12 +103,14 @@ function Dashboard() {
         <div className="md:col-span-2">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-medium">Calendar</h2>
-            <Link
-              href="/events/new"
-              className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
-            >
-              Add Event
-            </Link>
+            {hasEditAccess && (
+              <Link
+                href="/events/new"
+                className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
+              >
+                Add Event
+              </Link>
+            )}
           </div>
           
           <UpcomingEvents onEventClick={handleEventClick} />

@@ -4,26 +4,31 @@ import MultiCalendarView from "@/components/calendar/MultiCalendarView";
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import Link from "next/link";
+import { Calendar, CalendarRole } from "@/models/Calendar";
 
 export default function CombinedCalendarPage() {
     const { user } = useAuth();
-    const [calendars, setCalendars  ] = useState([]);
+    const [calendars, setCalendars] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [hasEditAccess, setHasEditAccess] = useState(false);
 
     useEffect(() => {
         const fetchCalendars = async () => {
-
             if (!user) return;
             try {
-                setLoading(true);
-                const res = await fetch("/api/calendar?userId=" + user.uid);
-                if (!res.ok) {
+                const response = await fetch(`/api/calendar?userId=${user.uid}`);
+                if (!response.ok) {
                     throw new Error("Failed to fetch calendars.");
                 }
-                const data = await res.json();
-                console.log(data);
+                const data = await response.json();
                 setCalendars(data);
+                
+                const hasAccess = data.some((calendar: Calendar) => 
+                    calendar.members[user.uid] === CalendarRole.EDITOR || 
+                    calendar.members[user.uid] === CalendarRole.OWNER
+                );
+                setHasEditAccess(hasAccess);
             } catch (err) {
                 setError((err as Error).message);
             } finally {
@@ -60,11 +65,13 @@ export default function CombinedCalendarPage() {
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-3xl font-bold mb-6">Combined Calendar View</h1>
                 <div className="flex gap-4 mb-6">
-                    <Link
-                        href='/events/new'
-                        className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
-                        Create Event
-                    </Link>
+                    {hasEditAccess && (
+                        <Link
+                            href='/events/new'
+                            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                            Create Event
+                        </Link>
+                    )}
                     <Link
                         href="/calendar/create"
                         className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
