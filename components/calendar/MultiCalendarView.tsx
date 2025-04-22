@@ -1,6 +1,10 @@
 "use client";
 
-import { Calendar as BigCalendar, momentLocalizer, View } from "react-big-calendar";
+import {
+  Calendar as BigCalendar,
+  momentLocalizer,
+  View,
+} from "react-big-calendar";
 import { Calendar } from "@/models/Calendar";
 import moment from "moment";
 import { useEffect, useState } from "react";
@@ -13,9 +17,13 @@ interface MultiCalendarViewProps {
   calendars: Calendar[];
 }
 
-export default function MultiCalendarView({ calendars }: MultiCalendarViewProps) {
+export default function MultiCalendarView({
+  calendars,
+}: MultiCalendarViewProps) {
   const router = useRouter();
-  const calendarStringIds = calendars.map((calendar) => calendar._id?.toString()).filter((id) => id !== undefined);
+  const calendarStringIds = calendars
+    .map((calendar) => calendar._id?.toString())
+    .filter((id) => id !== undefined);
 
   const localizer = momentLocalizer(moment);
   const [view, setView] = useState<View>("month");
@@ -23,7 +31,9 @@ export default function MultiCalendarView({ calendars }: MultiCalendarViewProps)
   const [events, setEvents] = useState<Event[]>([]);
   const [hoveredEvent, setHoveredEvent] = useState<Object | null>(null);
   const [selectedCalendar, setSelectedCalendar] = useState<string | null>(null);
-  const [visibleCalendars, setVisibleCalendars] = useState<Record<string, boolean>>(
+  const [visibleCalendars, setVisibleCalendars] = useState<
+    Record<string, boolean>
+  >(
     calendarStringIds.reduce((acc: Record<string, boolean>, id: string) => {
       acc[id] = true;
       return acc;
@@ -66,6 +76,7 @@ export default function MultiCalendarView({ calendars }: MultiCalendarViewProps)
         startTime: new Date(event.startTime),
         endTime: new Date(event.endTime),
       }));
+
       setEvents(events);
     };
 
@@ -74,25 +85,28 @@ export default function MultiCalendarView({ calendars }: MultiCalendarViewProps)
 
   const handleUpdateEvent = (updatedEvent: Event) => {
     setEvents((prev) =>
-      prev.map((event) => (event._id === updatedEvent._id ? updatedEvent : event))
+      prev.map((event) =>
+        event._id === updatedEvent._id ? updatedEvent : event
+      )
     );
     setSelectedEvent(null);
   };
 
   const handleDeleteEvent = async (eventId: string) => {
-    
     await fetch(`/api/events/${eventId}`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
       },
-    })
-    setEvents((prev) => prev.filter((event) => event._id?.toString() !== eventId));
+    });
+    setEvents((prev) =>
+      prev.filter((event) => event._id?.toString() !== eventId)
+    );
   };
 
   return (
     <div
-      className=" p-6 bg-purple-50 text-purple-800"
+      className="p-6 bg-purple-50 text-purple-800 h-full"
       style={{
         display: "grid",
         gridTemplateColumns: "7fr min-content",
@@ -112,17 +126,28 @@ export default function MultiCalendarView({ calendars }: MultiCalendarViewProps)
           onSelectEvent={(event: React.SyntheticEvent) =>
             setSelectedCalendar(null)
           }
+          eventPropGetter={(event) => ({
+            style: {
+              backgroundColor: event.color || "blue",
+              color: "white",
+            },
+          })}
           onSelectSlot={(slotInfo: Object) => setHoveredEvent(slotInfo)}
           components={{
             event: ({ event }) => (
-              <div className="relative group">
-                <span>{event.title}</span>
-                <button
+              <div
+                className="relative group"
+                onClick={() => setSelectedEvent(event)}
+              >
+                <span>
+                  {(event.title?.trim() && event.title.trim()) || "[No name]"}
+                </span>
+                {/* <button
                   onClick={() => setSelectedEvent(event)}
                   className="absolute top-0 right-0 hidden group-hover:block px-2 py-1 bg-blue-600 text-white text-xs rounded"
                 >
                   View
-                </button>
+                </button> */}
               </div>
             ),
           }}
@@ -174,14 +199,13 @@ export default function MultiCalendarView({ calendars }: MultiCalendarViewProps)
                         type="checkbox"
                         className="mr-2 text-nowrap"
                         checked={
-                          visibleCalendars[calendar._id?.toString() || ""]
+                          !!visibleCalendars[calendar._id?.toString() || ""]
                         }
                         onChange={() =>
                           toggleCalendarVisibility(
                             calendar._id?.toString() || ""
                           )
                         }
-                        className="mr-2"
                       />
                       {calendar.name}
                     </label>

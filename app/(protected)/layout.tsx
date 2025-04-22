@@ -1,10 +1,14 @@
 "use client";
 
-import React from 'react';
-import Link from 'next/link';
-import { useAuth } from '@/hooks/useAuth';
+import React from "react";
+import Link from "next/link";
+import { useAuth } from "@/hooks/useAuth";
 
-export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
+export default function ProtectedLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const { signOut, loading } = useAuth();
 
   if (loading) {
@@ -37,12 +41,19 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
           >
             Notifications
           </Link>
-          <button
+
+          <Link
+            href="/profile"
+            className="block mb-4 text-purple-800 font-medium hover:underline"
+          >
+            Profile
+          </Link>
+          {/* <button
             onClick={signOut}
             className="text-purple-800 font-medium hover:underline cursor-pointer"
           >
             Sign Out
-          </button>
+          </button> */}
         </aside>
         <main className="flex-1">{children}</main>
       </div>
