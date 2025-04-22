@@ -22,7 +22,12 @@ interface EventDialogProps {
   onDelete: (eventId: string) => void;
 }
 
-const EventDialog: React.FC<EventDialogProps> = ({ event, onClose, onUpdate, onDelete }) => {
+const EventDialog: React.FC<EventDialogProps> = ({
+  event,
+  onClose,
+  onUpdate,
+  onDelete,
+}) => {
   const [isEditing, setIsEditing] = useState(false);
   const router = useRouter();
 
@@ -49,7 +54,9 @@ const EventDialog: React.FC<EventDialogProps> = ({ event, onClose, onUpdate, onD
     <Dialog open={!!event} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{isEditing ? "Edit Event" : "Event Details"}</DialogTitle>
+          <DialogTitle>
+            {isEditing ? "Edit Event" : "Event Details"}
+          </DialogTitle>
           <DialogDescription>
             {isEditing
               ? "Update the details of your event and click 'Save Changes' to apply."
@@ -70,10 +77,12 @@ const EventDialog: React.FC<EventDialogProps> = ({ event, onClose, onUpdate, onD
                 <strong>Title:</strong> {event.title}
               </div>
               <div>
-                <strong>Description:</strong> {event.description || "No description"}
+                <strong>Description:</strong>{" "}
+                {event.description || "No description"}
               </div>
               <div>
-                <strong>Start:</strong> {new Date(event.startTime).toLocaleString()}
+                <strong>Start:</strong>{" "}
+                {new Date(event.startTime).toLocaleString()}
               </div>
               <div>
                 <strong>End:</strong> {new Date(event.endTime).toLocaleString()}
@@ -88,13 +97,6 @@ const EventDialog: React.FC<EventDialogProps> = ({ event, onClose, onUpdate, onD
           )}
         </div>
         <DialogFooter>
-          <Button
-            type="button"
-            onClick={handleExpand}
-            className="bg-green-600 text-white hover:bg-green-700"
-          >
-            Expand
-          </Button>
           {isEditing ? (
             <Button
               type="button"
@@ -121,13 +123,13 @@ const EventDialog: React.FC<EventDialogProps> = ({ event, onClose, onUpdate, onD
               </Button>
             </>
           )}
-          <Button
+          {/* <Button
             type="button"
             onClick={onClose}
             className="bg-gray-300 text-gray-800 hover:bg-gray-400"
           >
             Close
-          </Button>
+          </Button> */}
         </DialogFooter>
       </DialogContent>
     </Dialog>

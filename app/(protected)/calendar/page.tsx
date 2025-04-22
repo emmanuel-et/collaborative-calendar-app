@@ -8,7 +8,7 @@ import { CalendarScrollArea } from "@/components/calendar/CalendarScrollArea";
 import Link from "next/link";
 
 export default function CalendarPage() {
-  const { user,  loading } = useAuth();
+  const { user, loading } = useAuth();
 
   const [calendars, setCalendars] = useState<Record<CalendarRole, Calendar[]>>({
     [CalendarRole.OWNER]: [],
@@ -22,11 +22,11 @@ export default function CalendarPage() {
   // const onSelectCalendar = (calendar: Calendar) => {
   //   router.push(`/calendar/${calendar._id}`);
   // };
-  
+
   // const onCreateCalendar = () => {
   //   router.push("/calendar/create");
   // };
-  
+
   // const onEditCalendar = (calendar: Calendar) => {
   //   router.push(`/calendar/${calendar._id}/edit`);
   // };
@@ -56,9 +56,18 @@ export default function CalendarPage() {
       }
       const data = await calendars.json();
       setCalendars({
-        [CalendarRole.OWNER]: data.filter((calendar: Calendar) => calendar.members[user.uid] === CalendarRole.OWNER),
-        [CalendarRole.EDITOR]: data.filter((calendar: Calendar) => calendar.members[user.uid] === CalendarRole.EDITOR),
-        [CalendarRole.VIEWER]: data.filter((calendar: Calendar) => calendar.members[user.uid] === CalendarRole.VIEWER),
+        [CalendarRole.OWNER]: data.filter(
+          (calendar: Calendar) =>
+            calendar.members[user.uid] === CalendarRole.OWNER
+        ),
+        [CalendarRole.EDITOR]: data.filter(
+          (calendar: Calendar) =>
+            calendar.members[user.uid] === CalendarRole.EDITOR
+        ),
+        [CalendarRole.VIEWER]: data.filter(
+          (calendar: Calendar) =>
+            calendar.members[user.uid] === CalendarRole.VIEWER
+        ),
       });
       setLoadingPage(false);
     };
@@ -94,29 +103,36 @@ export default function CalendarPage() {
         >
           Create Calendar
         </Link>
-        <Link
-          href="/calendar/all"
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-        >
-          View Combined Calendars
-        </Link>
       </div>
       <ul className="pl-6 mb-6 space-y-4">
         <li>
           <h3 className="text-xl font-semibold mb-2">My Calendars</h3>
-          <CalendarScrollArea calendars={calendars[CalendarRole.OWNER]} onSelectCalendar={(calendar) => router.push(`/calendar/${calendar._id}`)} />
+          <CalendarScrollArea
+            calendars={calendars[CalendarRole.OWNER]}
+            onSelectCalendar={(calendar) =>
+              router.push(`/calendar/${calendar._id}`)
+            }
+          />
         </li>
         <li>
           <h3 className="text-xl font-semibold mb-2">Shared Calendars</h3>
-          <CalendarScrollArea calendars={calendars[CalendarRole.EDITOR]} onSelectCalendar={(calendar) => router.push(`/calendar/${calendar._id}`)} />
+          <CalendarScrollArea
+            calendars={calendars[CalendarRole.EDITOR]}
+            onSelectCalendar={(calendar) =>
+              router.push(`/calendar/${calendar._id}`)
+            }
+          />
         </li>
         <li>
           <h3 className="text-xl font-semibold mb-2">Subscribed Calendars</h3>
-          <CalendarScrollArea calendars={calendars[CalendarRole.VIEWER]} onSelectCalendar={(calendar) => router.push(`/calendar/${calendar._id}`)} />
+          <CalendarScrollArea
+            calendars={calendars[CalendarRole.VIEWER]}
+            onSelectCalendar={(calendar) =>
+              router.push(`/calendar/${calendar._id}`)
+            }
+          />
         </li>
       </ul>
     </div>
   );
-  
 }
-

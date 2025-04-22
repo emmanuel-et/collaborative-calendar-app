@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { Event } from '@/models/Event';
-import { useAuth } from '@/hooks/useAuth';
-import { GET } from '@/app/api/events/route';
-import { NextRequest } from 'next/server';
+import React, { useState, useEffect } from "react";
+import { Event } from "@/models/Event";
+import { useAuth } from "@/hooks/useAuth";
+import { GET } from "@/app/api/events/route";
+import { NextRequest } from "next/server";
 
 interface UpcomingEventsProps {
   onEventClick?: (event: Event) => void;
@@ -26,13 +26,21 @@ const UpcomingEvents: React.FC<UpcomingEventsProps> = ({ onEventClick }) => {
 
       try {
         const response = await fetch(`/api/events?userId=${user.uid}`);
-        
+
         if (!response.ok) {
-          throw new Error('Failed to fetch events');
+          throw new Error("Failed to fetch events");
         }
-        
-        const data = await response.json();
-        setEvents(data);
+
+        const data = (await response.json()) as Event[];
+        const now = new Date();
+        const oneDayFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+        const filteredEvents = data.filter((event) => {
+          const eventTime = new Date(event.startTime);
+          return eventTime >= now && eventTime <= oneDayFromNow;
+        });
+
+        setEvents(filteredEvents);
       } catch (err) {
         setError((err as Error).message);
       } finally {
@@ -49,7 +57,6 @@ const UpcomingEvents: React.FC<UpcomingEventsProps> = ({ onEventClick }) => {
     }
   };
 
-  
   if (loading) {
     return <div className="p-4 text-center">Loading calendar...</div>;
   }
@@ -60,13 +67,13 @@ const UpcomingEvents: React.FC<UpcomingEventsProps> = ({ onEventClick }) => {
 
   return (
     <div className="bg-white rounded-lg shadow p-4">
-      {events.length > 0 && (
-        <div>
-          <h4 className="text-xl font-medium mb-2">Upcoming Events</h4>
+      <div>
+        <h4 className="text-xl font-medium mb-2">Upcoming Events</h4>
+        {events.length > 0 ? (
           <ul className="space-y-2">
-            {events.map(event => (
-              <li 
-                key={event._id?.toString()} 
+            {events.map((event) => (
+              <li
+                key={event._id?.toString()}
                 className="p-2 rounded hover:bg-purple-50 cursor-pointer"
                 onClick={() => handleEventClick(event)}
               >
@@ -77,10 +84,12 @@ const UpcomingEvents: React.FC<UpcomingEventsProps> = ({ onEventClick }) => {
               </li>
             ))}
           </ul>
-        </div>
-      )}
+        ) : (
+          <p className="text-gray-500 text-sm">No upcoming events.</p>
+        )}
+      </div>
     </div>
   );
 };
 
-export default UpcomingEvents; 
+export default UpcomingEvents;

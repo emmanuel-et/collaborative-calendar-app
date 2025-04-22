@@ -58,7 +58,9 @@ const EventForm: React.FC<EventFormProps> = ({
 
           if (calendarIndex !== -1) {
             if (data[calendarIndex].members[user.uid] === CalendarRole.VIEWER) {
-              setError("You do not have permission to create events in this calendar.");
+              setError(
+                "You do not have permission to create events in this calendar."
+              );
               return;
             }
             setSelectedCalendarIdx(calendarIndex);
@@ -78,8 +80,15 @@ const EventForm: React.FC<EventFormProps> = ({
     e.preventDefault();
     setError("");
 
+    if (
+      calendars[selectedCalendarIdx].members[user?.uid] === CalendarRole.VIEWER
+    ) {
+      setError("You do not have permission to create events in this calendar.");
+      return;
+    }
+
     // Validate form
-    if (!title) {
+    if (!title.trim()) {
       setError("Title is required");
       return;
     }
@@ -102,7 +111,12 @@ const EventForm: React.FC<EventFormProps> = ({
       return;
     }
 
-    if (selectedCalendarIdx < 0 || selectedCalendarIdx >= calendars.length || !calendars[selectedCalendarIdx] || !calendars[selectedCalendarIdx]._id?.toString()) {
+    if (
+      selectedCalendarIdx < 0 ||
+      selectedCalendarIdx >= calendars.length ||
+      !calendars[selectedCalendarIdx] ||
+      !calendars[selectedCalendarIdx]._id?.toString()
+    ) {
       setError("Please select a calendar");
       return;
     }
@@ -243,12 +257,15 @@ const EventForm: React.FC<EventFormProps> = ({
         />
       </div>
 
-      <Button
-        type="submit"
-        className="w-full bg-purple-600 text-white hover:bg-purple-700"
-      >
-        {isEdit ? "Update Event" : "Create Event"}
-      </Button>
+      {error !=
+        "You do not have permission to create events in this calendar." && (
+        <Button
+          type="submit"
+          className="w-full bg-purple-600 text-white hover:bg-purple-700"
+        >
+          {isEdit ? "Update Event" : "Create Event"}
+        </Button>
+      )}
     </form>
   );
 };
