@@ -24,7 +24,6 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
     try {
         const calendarData = await request.json();
-        console.log('Creating calendar:', calendarData);
         
         // Validate required fields
         if (!calendarData.name || !calendarData.members) {
