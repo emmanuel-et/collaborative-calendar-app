@@ -25,7 +25,6 @@ export async function GET(request: NextRequest) {
     }
 
     if (calendarId) {
-      console.log("Fetching events for calendarId:", calendarId);
       const events = await getEventsByCalendar(calendarId);
       return NextResponse.json(events);
     }

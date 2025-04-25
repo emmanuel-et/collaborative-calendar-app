@@ -19,7 +19,7 @@ interface EventDialogProps {
   event: Event | null;
   onClose: () => void;
   onUpdate: (updatedEvent: Event) => void;
-  onDelete: (eventId: string) => void;
+  onDelete: (event: Event) => void;
 }
 
 const EventDialog: React.FC<EventDialogProps> = ({
@@ -41,7 +41,7 @@ const EventDialog: React.FC<EventDialogProps> = ({
 
   const handleDelete = () => {
     if (confirm("Are you sure you want to delete this event?")) {
-      onDelete(event._id?.toString() || "");
+      onDelete(event);
       onClose();
     }
   };

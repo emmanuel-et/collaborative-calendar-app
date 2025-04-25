@@ -22,7 +22,6 @@ export default function CombinedCalendarPage() {
                     throw new Error("Failed to fetch calendars.");
                 }
                 const data = await res.json();
-                console.log(data);
                 setCalendars(data);
             } catch (err) {
                 setError((err as Error).message);

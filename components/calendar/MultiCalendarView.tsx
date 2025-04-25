@@ -12,6 +12,8 @@ import { useRouter } from "next/navigation";
 import { Event } from "@/models/Event";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import EventDialog from "@/components/event/EventDialog";
+import { EventNotificationInput } from "@/models/Notification";
+import { useAuth } from "@/hooks/useAuth";
 
 interface MultiCalendarViewProps {
   calendars: Calendar[];
@@ -20,6 +22,7 @@ interface MultiCalendarViewProps {
 export default function MultiCalendarView({
   calendars,
 }: MultiCalendarViewProps) {
+  const { user } = useAuth();
   const router = useRouter();
   const calendarStringIds = calendars
     .map((calendar) => calendar._id?.toString())
@@ -92,16 +95,34 @@ export default function MultiCalendarView({
     setSelectedEvent(null);
   };
 
-  const handleDeleteEvent = async (eventId: string) => {
+  const handleDeleteEvent = async (event: Event) => {
+    const eventId = event._id?.toString() || "";
     await fetch(`/api/events/${eventId}`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
       },
     });
+
     setEvents((prev) =>
       prev.filter((event) => event._id?.toString() !== eventId)
     );
+
+    // Send event notification
+    const notificationPayload: EventNotificationInput = {
+      calendarId: event.calendarId.toString(),
+      eventTitle: event.title,
+      senderId: user?.uid || "",
+      action: "deleted",
+    };
+
+    await fetch("/api/notifications?type=event", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(notificationPayload),
+    });
   };
 
   return (

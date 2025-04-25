@@ -6,8 +6,10 @@ import { useAuth } from "@/hooks/useAuth";
 import EventForm from "@/components/event/EventForm";
 import { EventInput } from "@/models/Event";
 import Link from "next/link";
+import { EventNotificationInput } from "@/models/Notification";
 
 export default function EventPage() {
+  const { user } = useAuth();
   const router = useRouter();
   const { loading } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -54,6 +56,24 @@ export default function EventPage() {
         const errorData = await response.json();
         throw new Error(errorData.error || `Failed to ${isEditing ? "update" : "create"} event`);
       }
+
+      const data = await response.json();
+
+      // Send event notification
+      const notificationPayload: EventNotificationInput = {
+        calendarId: data.calendarId,
+        eventTitle: data.title,
+        senderId: user?.uid || "",
+        action: isEditing ? "updated" : "created",
+      };
+
+      await fetch("/api/notifications?type=event", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(notificationPayload),
+      });
 
       // Redirect to dashboard on success
       router.push("/dashboard");

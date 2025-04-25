@@ -1,8 +1,8 @@
 import clientPromise from '@/utils/mongodb';
 import { ObjectId } from 'mongodb';
-import { InviteNotificationInput, Notification, NotificationInput, NotificationType } from '@/models/Notification';
+import { EventNotificationInput, InviteNotificationInput, Notification, NotificationInput, NotificationType } from '@/models/Notification';
 import { getUserByEmail, getUserByUid } from './userDb';
-import { addMemberToCalendar, getCalendarById } from './db';
+import { addMemberToCalendar, getCalendarById, getEventById } from './db';
 import { CalendarRole } from '@/models/Calendar';
 
 export async function createNotification(notificationData: NotificationInput): Promise<Notification> {
@@ -20,6 +20,36 @@ export async function createNotification(notificationData: NotificationInput): P
 
   const result = await db.collection('notifications').insertOne(newNotification);
   return { ...newNotification, _id: result.insertedId };
+}
+
+export async function sendEventNotification(eventData: EventNotificationInput) {
+  const calendar = await getCalendarById(eventData.calendarId);
+
+  if (!calendar) {
+    throw new Error('Calendar with the provided ID does not exist.');
+  }
+
+  const sender = await getUserByUid(eventData.senderId);
+  if (!sender) {
+    throw new Error('Sender with the provided ID does not exist.');
+  }
+
+  const notificationPromises = Object.keys(calendar.members).map(async (userId) => {
+    if (userId === sender.uid) {
+      return;
+    }
+
+    const notificationData: NotificationInput = {
+      userId: userId.toString(),
+      calendarId: new ObjectId(eventData.calendarId),
+      message: `The ${eventData.eventTitle} event in the ${calendar.name} calendar has been ${eventData.action} by ${sender.name}.`,
+      type: NotificationType.EVENT,
+    };
+
+    return createNotification(notificationData);
+  });
+
+  await Promise.all(notificationPromises);
 }
 
 export async function sendInviteNotification(inviteData: InviteNotificationInput) {
