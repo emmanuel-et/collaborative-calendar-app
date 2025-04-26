@@ -1,48 +1,81 @@
-import clientPromise from '@/utils/mongodb';
-import { User, UserInput } from '@/models/User';
+import clientPromise from "@/utils/mongodb";
+import { User, UserInput } from "@/models/User";
+import { Calendar, CalendarRole } from "@/models/Calendar";
+import { NextRequest } from "next/server";
+import { getAuth } from "firebase-admin/auth";
 
 export async function createUser(userData: UserInput): Promise<User> {
   const client = await clientPromise;
   const db = client.db();
-  
+
   const newUser: User = {
     ...userData,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
-  
-  const result = await db.collection('users').insertOne(newUser);
+
+  const result = await db.collection("users").insertOne(newUser);
   return { ...newUser, _id: result.insertedId };
 }
 
 export async function getUserByUid(uid: string): Promise<User | null> {
   const client = await clientPromise;
   const db = client.db();
-  
-  return db.collection('users').findOne<User>({ uid });
+
+  return db.collection("users").findOne<User>({ uid });
 }
 
 export async function getUserByEmail(email: string): Promise<User | null> {
   const client = await clientPromise;
   const db = client.db();
-  
-  return db.collection('users').findOne<User>({ email });
+
+  return db.collection("users").findOne<User>({ email });
 }
 
-export async function updateUser(uid: string, userData: Partial<User>): Promise<User | null> {
+export async function getUserFromRequest(
+  request: NextRequest
+): Promise<User | null> {
   const client = await clientPromise;
   const db = client.db();
-  
+
+  const user = request.headers.get("user");
+
+  console.log("User from request:", user);
+  if (!user) {
+    console.error("User field is missing in the request body");
+    return null;
+  }
+
+  console.log("Fetching user from database:", user);
+  return db.collection("users").findOne<User>({ uid: user });
+}
+
+export function getUserRole(
+  calendar: Calendar,
+  userId: string
+): CalendarRole | null {
+  return calendar.members[userId] || null;
+}
+
+export async function updateUser(
+  uid: string,
+  userData: Partial<User>
+): Promise<User | null> {
+  const client = await clientPromise;
+  const db = client.db();
+
   const updateData = {
     ...userData,
     updatedAt: new Date(),
   };
-  
-  const result = await db.collection('users').findOneAndUpdate(
-    { uid },
-    { $set: updateData },
-    { returnDocument: 'after' }
-  );
-  
+
+  const result = await db
+    .collection("users")
+    .findOneAndUpdate(
+      { uid },
+      { $set: updateData },
+      { returnDocument: "after" }
+    );
+
   return result?.value || null;
 }

@@ -25,6 +25,7 @@ export async function getCalendarsByUser(userId: string): Promise<Calendar[]> {
     .toArray();
 }
 
+
 export async function getCalendarById(calendarId: string): Promise<Calendar | null> {
   const client = await clientPromise;
   const db = client.db();

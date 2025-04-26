@@ -59,7 +59,7 @@ const EventForm: React.FC<EventFormProps> = ({
           if (calendarIndex !== -1) {
             if (data[calendarIndex].members[user.uid] === CalendarRole.VIEWER) {
               setError(
-                "You do not have permission to create events in this calendar."
+                "You do not have permission to modify events in this calendar."
               );
               return;
             }
@@ -81,9 +81,10 @@ const EventForm: React.FC<EventFormProps> = ({
     setError("");
 
     if (
-      calendars[selectedCalendarIdx].members[user?.uid] === CalendarRole.VIEWER
+      calendars[selectedCalendarIdx]?.members?.[user?.uid] ===
+      CalendarRole.VIEWER
     ) {
-      setError("You do not have permission to create events in this calendar.");
+      setError("You do not have permission to modify events in this calendar.");
       return;
     }
 
@@ -257,15 +258,12 @@ const EventForm: React.FC<EventFormProps> = ({
         />
       </div>
 
-      {error !=
-        "You do not have permission to create events in this calendar." && (
-        <Button
-          type="submit"
-          className="w-full bg-purple-600 text-white hover:bg-purple-700"
-        >
-          {isEdit ? "Update Event" : "Create Event"}
-        </Button>
-      )}
+      <Button
+        type="submit"
+        className="w-full bg-purple-600 text-white hover:bg-purple-700"
+      >
+        {isEdit ? "Update Event" : "Create Event"}
+      </Button>
     </form>
   );
 };
