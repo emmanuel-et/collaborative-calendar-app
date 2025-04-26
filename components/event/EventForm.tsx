@@ -35,6 +35,7 @@ const EventForm: React.FC<EventFormProps> = ({
   const [location, setLocation] = useState(initialData.location || "");
   const [isAllDay, setIsAllDay] = useState(initialData.isAllDay || false);
   const [color, setColor] = useState(initialData.color || "#9333ea"); // Default purple
+  const [priority, setPriority] = useState(initialData.priority || 3);  
   const [selectedCalendarIdx, setSelectedCalendarIdx] = useState(-1);
   const [calendars, setCalendars] = useState<Calendar[]>([]);
   const [error, setError] = useState("");
@@ -132,6 +133,7 @@ const EventForm: React.FC<EventFormProps> = ({
       location,
       isAllDay,
       color,
+      priority,
       createdBy: user?.uid || "",
       participants: [user?.uid || ""], // Initially just the creator
     };
@@ -187,6 +189,29 @@ const EventForm: React.FC<EventFormProps> = ({
           className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
           rows={3}
         />
+      </div>
+
+      <div>
+        <label htmlFor="priority" className="block text-sm font-medium mb-1">
+          Priority
+        </label>
+        <div className="flex items-center space-x-2">
+          <input
+            type="range"
+            id="priority"
+            min="1"
+            max="5"
+            value={priority}
+            onChange={(e) => setPriority(parseInt(e.target.value))}
+            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+          />
+          <span className="text-sm font-medium">
+            {priority === 5 ? "Highest" : 
+             priority === 4 ? "High" : 
+             priority === 3 ? "Medium" : 
+             priority === 2 ? "Low" : "Lowest"}
+          </span>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
