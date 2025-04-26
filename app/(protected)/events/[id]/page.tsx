@@ -51,7 +51,6 @@ export default function EventPage() {
         body: JSON.stringify(eventData),
       });
       const responseData = await response.json(); 
-      console.log("API Response:", responseData); 
 
       if (!response.ok) {
         throw new Error(responseData.error || `Failed to ${isEditing ? "update" : "create"} event`);

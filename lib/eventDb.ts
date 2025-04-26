@@ -21,15 +21,10 @@ export async function getEventsByUser(userId: string): Promise<Event[]> {
   const db = client.db();
   // Fetch calendars where the user is a member
 
-  console.log("GETEVENTSBYUSER events for userId:", userId);
-  console.log({ [`members.${userId}`]: { $exists: true } });
   const calendars = await db
     .collection("calendar")
     .find({ [`members.${userId}`]: { $exists: true } })
     .toArray();
-  console.log(calendars);
-
-  console.log("The user is a memeber of these calendars: ", calendars);
   const calendarIds = calendars.map((calendar) => calendar._id.toString());
 
   // Fetch events from those calendars
