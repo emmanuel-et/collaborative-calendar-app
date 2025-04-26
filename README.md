@@ -72,3 +72,26 @@ We generate our own data off actual users interacting with the app, below our sc
 - You will see the login page powered by Firebase Authentication.
 - After logging in, you can create and manage calendars and events, view notifications via the web dashboard.
   
+---
+
+## Code Documentation and References
+
+### External Code and Inspirations
+- Firebase Authentication examples were adapted from [Firebase Official Docs](https://firebase.google.com/docs/auth/web/start).
+- NoSQL schema inspirations were based on best practices outlined in [MongoDB Data Modeling](https://www.mongodb.com/docs/manual/core/data-modeling-introduction/).
+
+### Changes Made
+- Firebase Auth was customized to work seamlessly with our event scheduling backend.
+- Optimized MongoDB queries to minimize overhead in conflict detection using batch fetching strategies.
+
+---
+
+## Sample Screenshots
+- *TODO*
+
+---
+
+## Final Notes
+- This project is designed to scale easily with cloud deployments (MongoDB Atlas, Firebase Hosting).
+- Please ensure your `.env` file is properly configured before running the application.
+- For any issues, feel free to contact any member of the project team.
