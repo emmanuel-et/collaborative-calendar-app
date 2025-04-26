@@ -17,7 +17,8 @@ This project is a cloud-based, real-time collaborative calendar platform designe
 - **Primary Database**: MongoDB
 - **Authentication**: Firebase Authentication
 
-> [MongoDB Installation Guide](https://www.mongodb.com/docs/manual/installation/) 
+> [MongoDB Installation Guide](https://www.mongodb.com/docs/manual/installation/)
+> 
 > [Firebase Setup Guide](https://firebase.google.com/docs/web/setup)
 
 ### Sample Data
