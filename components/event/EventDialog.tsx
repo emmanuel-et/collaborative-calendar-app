@@ -34,6 +34,7 @@ const EventDialog: React.FC<EventDialogProps> = ({
 
   if (!event) return null;
 
+
   const handleUpdate = (updatedEventData: EventInput) => {
     const updatedEvent: Event = { 
       ...event, 
@@ -43,6 +44,7 @@ const EventDialog: React.FC<EventDialogProps> = ({
       createdAt: event.createdAt,
       updatedAt: new Date()
     };
+
     onUpdate(updatedEvent);
     setIsEditing(false);
   };

@@ -8,6 +8,7 @@ import { Event } from "@/models/Event";
 import { useAuth } from "@/hooks/useAuth";
 import { CalendarRole } from "@/models/Calendar";
 import Link from "next/link";
+import { EventNotificationInput } from "@/models/Notification";
 
 export default function CalendarDashboardPage() {
   const { user } = useAuth();
@@ -79,6 +80,22 @@ export default function CalendarDashboardPage() {
         const errorData = await response.json();
         throw new Error(errorData.error || `Failed to update event`);
       }
+
+      // Send event notification
+      const notificationPayload: EventNotificationInput = {
+        calendarId: updatedEvent.calendarId.toString(),
+        eventTitle: updatedEvent.title,
+        senderId: user?.uid || "",
+        action: "updated",
+      };
+
+      await fetch("/api/notifications?type=event", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(notificationPayload),
+      });
       setSelectedEvent(null);
     };
   

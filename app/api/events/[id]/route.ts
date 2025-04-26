@@ -32,7 +32,7 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params;
-    const authResponse = await authenticate(request, params.id);
+    const authResponse = await authenticate(request, id);
     if (authResponse) {
       return authResponse; // Return the authentication error response
     }
@@ -81,7 +81,6 @@ export async function DELETE(
 
 export async function authenticate(request: NextRequest, id: string) {
   const user = await getUserFromRequest(request);
-  console.log("getUserFromRequest returned: ", user);
 
   if (!user) {
     return NextResponse.json(
