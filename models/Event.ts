@@ -12,6 +12,7 @@ export interface Event {
   participants: string[]; // Firebase UIDs
   isAllDay: boolean;
   color?: string;
+  priority?: number; // 1 to 5
   createdAt: Date;
   updatedAt: Date;
 }
@@ -27,4 +28,5 @@ export interface EventInput {
   participants: string[]; // Firebase UIDs
   isAllDay: boolean;
   color?: string;
+  priority?: number; // 1 to 5
 }

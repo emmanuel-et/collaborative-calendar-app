@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import EventForm from "@/components/event/EventForm";
-import { Event } from "@/models/Event";
+import { Event, EventInput } from "@/models/Event";
 import {
   Dialog,
   DialogContent,
@@ -19,7 +19,7 @@ interface EventDialogProps {
   event: Event | null;
   onClose: () => void;
   onUpdate: (updatedEvent: Event) => void;
-  onDelete: (event: Event) => void;
+  onDelete: (eventId: string) => void;
 }
 
 const EventDialog: React.FC<EventDialogProps> = ({
@@ -34,9 +34,15 @@ const EventDialog: React.FC<EventDialogProps> = ({
 
   if (!event) return null;
 
-  const handleUpdate = (updatedEventData: Partial<Event>) => {
-    const updatedEvent = { ...event, ...updatedEventData };
-    console.log("govadia", updatedEvent);
+  const handleUpdate = (updatedEventData: EventInput) => {
+    const updatedEvent: Event = { 
+      ...event, 
+      ...updatedEventData,
+      calendarId: event.calendarId,
+      _id: event._id,
+      createdAt: event.createdAt,
+      updatedAt: new Date()
+    };
     onUpdate(updatedEvent);
     setIsEditing(false);
   };
@@ -80,8 +86,11 @@ const EventDialog: React.FC<EventDialogProps> = ({
         <div className="grid gap-4 py-4">
           {isEditing ? (
             <EventForm
-              calendarId={event.calendarId}
-              initialData={event}
+              calendarId={event.calendarId.toString()}
+              initialData={{
+                ...event,
+                calendarId: event.calendarId.toString()
+              }}
               onSubmit={handleUpdate}
               isEdit={true}
             />
@@ -106,6 +115,14 @@ const EventDialog: React.FC<EventDialogProps> = ({
               </div>
               <div>
                 <strong>All Day:</strong> {event.isAllDay ? "Yes" : "No"}
+              </div>
+              <div>
+                <strong>Priority:</strong>{" "}
+                {event.priority === 5 ? "Highest" : 
+                 event.priority === 4 ? "High" : 
+                 event.priority === 3 ? "Medium" : 
+                 event.priority === 2 ? "Low" : 
+                 event.priority === 1 ? "Lowest" : "Not set"}
               </div>
             </>
           )}
