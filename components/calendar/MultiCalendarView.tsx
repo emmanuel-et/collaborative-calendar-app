@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { Event } from "@/models/Event";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import EventDialog from "@/components/event/EventDialog";
+import { EventNotificationInput } from "@/models/Notification";
 import { useAuth } from "@/hooks/useAuth";
 
 interface MultiCalendarViewProps {
@@ -27,6 +28,7 @@ export default function MultiCalendarView({
   handleUpdateEvent,
   handleDeleteEvent,
 }: MultiCalendarViewProps) {
+  const { user } = useAuth();
   const router = useRouter();
   const calendarStringIds = calendars
     .map((calendar) => calendar._id?.toString())
@@ -48,7 +50,7 @@ export default function MultiCalendarView({
   );
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-  const { user } = useAuth();
+  //const { user } = useAuth();
   const toggleCalendarVisibility = (calendarId: string) => {
     setVisibleCalendars((prev) => ({
       ...prev,

@@ -24,3 +24,10 @@ export interface InviteNotificationInput {
   calendarId: string;
   senderId: string;
 }
+
+export interface EventNotificationInput {
+  calendarId: string;
+  eventTitle: string;
+  senderId: string;
+  action: string; // e.g., "created", "updated", "deleted"
+}

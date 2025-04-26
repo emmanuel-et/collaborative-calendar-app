@@ -1,36 +1,97 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Collaborative Calendar for Group Scheduling
 
-## Getting Started
+## Team Members
+* Etukudoh, Emmanuel (eetukudoh3@gatech.edu)
+* Lazor, Lydia (llazor@gatech.edu)
+* Mukoro, Oruaroghene (omukoro3@gaetch.edu)
+* Song, Jerry (jsong424@gatech.edu) 
 
-First, run the development server:
+## Overview
+This project is a cloud-based, real-time collaborative calendar platform designed for efficient group scheduling. Users can create calendars, invite members, manage events, detect conflicts, and receive real-time notifications.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Data Preparation and Setup
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Database Systems
+- **Primary Database**: MongoDB
+- **Authentication**: Firebase Authentication
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+> [MongoDB Installation Guide](https://www.mongodb.com/docs/manual/installation/)
+> 
+> [Firebase Setup Guide](https://firebase.google.com/docs/web/setup)
 
-## Learn More
+### Sample Data
+We generate our own data off actual users interacting with the app, below our screenshots of sample data from our databases:
+- *TODO*
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Application and Code Setup
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Prerequisites
+- Node.js (v18+)
+- npm or yarn
+- MongoDB instance (local or Atlas cloud database)
+- Firebase project credentials
 
-## Deploy on Vercel
+### Installation Instructions
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/emmanuel-et/collaborative-calendar.git
+   cd collaborative-calendar
+   ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+2. **Install Dependencies**:
+   ```bash
+   npm install
+   ```
+
+3. **Configure Environment Variables**:
+   Create a `.env.local` file. You can create your own instances and fill in the gaps:
+   ```
+   MONGODB_URI=<your-mongo-uri-or-dynamo-configuration>
+   NEXT_PUBLIC_FIREBASE_API_KEY=<your-firebase-api-key>
+   NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=<your-firebase-auth-domain>
+   NEXT_PUBLIC_FIREBASE_PROJECT_ID=<your-firebase-project-id>
+   NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=<your-firebase-storage-bucket>
+   NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=<your-firebase-messaging-sender-id>
+   NEXT_PUBLIC_FIREBASE_APP_ID=<your-firebase-app-id>
+   ```
+
+4. **Run the Application**:
+   ```bash
+   npm run dev
+   ```
+   - Frontend and backend are integrated in Next.js.
+   - [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API. 
+
+### Running the GUI
+- Navigate to `http://localhost:3000/`
+- You will see the login page powered by Firebase Authentication.
+- After logging in, you can create and manage calendars and events, view notifications via the web dashboard.
+  
+---
+
+## Code Documentation and References
+
+### External Code and Inspirations
+- Firebase Authentication examples were adapted from [Firebase Official Docs](https://firebase.google.com/docs/auth/web/start).
+- NoSQL schema inspirations were based on best practices outlined in [MongoDB Data Modeling](https://www.mongodb.com/docs/manual/core/data-modeling-introduction/).
+
+### Changes Made
+- Firebase Auth was customized to work seamlessly with our event scheduling backend.
+- Optimized MongoDB queries to minimize overhead in conflict detection using batch fetching strategies.
+
+---
+
+## Sample Screenshots
+- *TODO*
+
+---
+
+## Final Notes
+- This project is designed to scale easily with cloud deployments (MongoDB Atlas, Firebase Hosting).
+- Please ensure your `.env` file is properly configured before running the application.
+- For any issues, feel free to contact any member of the project team.

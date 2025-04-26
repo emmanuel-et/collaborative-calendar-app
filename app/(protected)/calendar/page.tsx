@@ -75,9 +75,6 @@ export default function CalendarPage() {
     fetchCalendars();
   }, [user]);
 
-  // useEffect(() => {
-  //   console.log(user)
-  // }, [loading]);
 
   if (loading || loadingPage) {
     return (

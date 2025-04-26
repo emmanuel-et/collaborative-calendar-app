@@ -7,6 +7,7 @@ import { Event } from "@/models/Event";
 import UpcomingEvents from "@/components/event/UpcomingEvents";
 import Link from "next/link";
 import MultiCalendarView from "@/components/calendar/MultiCalendarView";
+import { EventNotificationInput } from "@/models/Notification";
 
 function Dashboard() {
   const { user, loading } = useAuth();
@@ -29,7 +30,6 @@ function Dashboard() {
           throw new Error("Failed to fetch calendars.");
         }
         const data = await res.json();
-        console.log(data);
         setCalendars(data);
       } catch (err) {
         setError((err as Error).message);
@@ -94,23 +94,56 @@ function Dashboard() {
 
   const handleDeleteEvent = async (eventId: string) => {
     try {
+      // Fetch the event details using the eventId
+      const eventResponse = await fetch(`/api/events/${eventId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        user: user.uid || "",
+      },
+      });
+
+      if (!eventResponse.ok) {
+      const errorData = await eventResponse.json();
+      throw new Error(errorData.error || "Failed to fetch event details");
+      }
+
+      const event: Event = await eventResponse.json();
+
+      // Proceed with deleting the event
       const response = await fetch(`/api/events/${eventId}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          user: user.uid || "",
-        },
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        user: user.uid || "",
+      },
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to delete event");
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to delete event");
       }
 
       // Update the frontend state to remove the deleted event
       setEvents((prevEvents) =>
-        prevEvents.filter((event) => event._id?.toString() !== eventId)
+      prevEvents.filter((event) => event._id?.toString() !== eventId)
       );
+
+      // Send event notification
+      const notificationPayload: EventNotificationInput = {
+      calendarId: event.calendarId.toString(),
+      eventTitle: event.title,
+      senderId: user?.uid || "",
+      action: "deleted",
+      };
+
+      await fetch("/api/notifications?type=event", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(notificationPayload),
+      });
     } catch (error) {
       console.error("Error deleting event:", error);
       throw error; // Re-throw the error so EventDialog can handle it

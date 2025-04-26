@@ -159,7 +159,7 @@ export default function CalendarDashboardPage() {
         events={events}
         handleDeleteEvent={handleDeleteEvent}
         handleUpdateEvent={handleUpdateEvent}
-/>
+      />
       </div>
     </div>
   );

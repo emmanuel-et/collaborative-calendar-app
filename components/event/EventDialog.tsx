@@ -19,7 +19,7 @@ interface EventDialogProps {
   event: Event | null;
   onClose: () => void;
   onUpdate: (updatedEvent: Event) => void;
-  onDelete: (eventId: string) => void;
+  onDelete: (event: Event) => void;
 }
 
 const EventDialog: React.FC<EventDialogProps> = ({
