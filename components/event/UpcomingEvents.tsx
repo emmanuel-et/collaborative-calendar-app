@@ -15,8 +15,6 @@ const UpcomingEvents: React.FC<UpcomingEventsProps> = ({
   onEventClick,
   events,
 }) => {
-  console.log("UpcomingEvents component rendered");
-  console.log("Events:", events);
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

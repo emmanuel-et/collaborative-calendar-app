@@ -19,7 +19,7 @@ interface EventDialogProps {
   event: Event | null;
   onClose: () => void;
   onUpdate: (updatedEvent: Event) => void;
-  onDelete: (event: Event) => void;
+  onDelete: (eventId: string) => void;
 }
 
 const EventDialog: React.FC<EventDialogProps> = ({
@@ -36,7 +36,6 @@ const EventDialog: React.FC<EventDialogProps> = ({
 
   const handleUpdate = (updatedEventData: Partial<Event>) => {
     const updatedEvent = { ...event, ...updatedEventData };
-    console.log("govadia", updatedEvent);
     onUpdate(updatedEvent);
     setIsEditing(false);
   };

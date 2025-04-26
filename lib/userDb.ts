@@ -2,7 +2,6 @@ import clientPromise from "@/utils/mongodb";
 import { User, UserInput } from "@/models/User";
 import { Calendar, CalendarRole } from "@/models/Calendar";
 import { NextRequest } from "next/server";
-import { getAuth } from "firebase-admin/auth";
 
 export async function createUser(userData: UserInput): Promise<User> {
   const client = await clientPromise;
@@ -40,13 +39,11 @@ export async function getUserFromRequest(
 
   const user = request.headers.get("user");
 
-  console.log("User from request:", user);
   if (!user) {
     console.error("User field is missing in the request body");
     return null;
   }
 
-  console.log("Fetching user from database:", user);
   return db.collection("users").findOne<User>({ uid: user });
 }
 
