@@ -7,7 +7,7 @@ import {
 } from "react-big-calendar";
 import { Calendar } from "@/models/Calendar";
 import moment from "moment";
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Event } from "@/models/Event";
 import "react-big-calendar/lib/css/react-big-calendar.css";
@@ -17,10 +17,16 @@ import { useAuth } from "@/hooks/useAuth";
 
 interface MultiCalendarViewProps {
   calendars: Calendar[];
+  events: Event[];
+  handleUpdateEvent: (event: Event) => void;
+  handleDeleteEvent: (eventId: string) => void;
 }
 
 export default function MultiCalendarView({
   calendars,
+  events,
+  handleUpdateEvent,
+  handleDeleteEvent,
 }: MultiCalendarViewProps) {
   const { user } = useAuth();
   const router = useRouter();
@@ -31,7 +37,7 @@ export default function MultiCalendarView({
   const localizer = momentLocalizer(moment);
   const [view, setView] = useState<View>("month");
   const [date, setDate] = useState(new Date());
-  const [events, setEvents] = useState<Event[]>([]);
+  // const [events, setEvents] = useState<Event[]>([]);
   const [hoveredEvent, setHoveredEvent] = useState<Object | null>(null);
   const [selectedCalendar, setSelectedCalendar] = useState<string | null>(null);
   const [visibleCalendars, setVisibleCalendars] = useState<
@@ -44,7 +50,7 @@ export default function MultiCalendarView({
   );
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-
+  //const { user } = useAuth();
   const toggleCalendarVisibility = (calendarId: string) => {
     setVisibleCalendars((prev) => ({
       ...prev,
@@ -61,69 +67,34 @@ export default function MultiCalendarView({
     );
   };
 
+  useEffect(() => {
+    toggleAllCalendars(true);
+  }, [calendars]);
+
   const getVisibleEvents = () => {
     return events.filter((event: any) => visibleCalendars[event.calendarId]);
   };
 
-  useEffect(() => {
-    const fetchEvents = async () => {
-      let events = (
-        await Promise.all(
-          calendarStringIds.map((id) =>
-            fetch("/api/events?calendarId=" + id).then((res) => res.json())
-          )
-        )
-      ).flat();
-      events = events.map((event) => ({
-        ...event,
-        startTime: new Date(event.startTime),
-        endTime: new Date(event.endTime),
-      }));
+  // useEffect(() => {
+  //   const fetchEvents = async () => {
+  //     let events = (
+  //       await Promise.all(
+  //         calendarStringIds.map((id) =>
+  //           fetch("/api/events?calendarId=" + id).then((res) => res.json())
+  //         )
+  //       )
+  //     ).flat();
+  //     events = events.map((event) => ({
+  //       ...event,
+  //       startTime: new Date(event.startTime),
+  //       endTime: new Date(event.endTime),
+  //     }));
 
-      setEvents(events);
-    };
+  //     setEvents(events);
+  //   };
 
-    fetchEvents();
-  }, []);
-
-  const handleUpdateEvent = (updatedEvent: Event) => {
-    setEvents((prev) =>
-      prev.map((event) =>
-        event._id === updatedEvent._id ? updatedEvent : event
-      )
-    );
-    setSelectedEvent(null);
-  };
-
-  const handleDeleteEvent = async (event: Event) => {
-    const eventId = event._id?.toString() || "";
-    await fetch(`/api/events/${eventId}`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    setEvents((prev) =>
-      prev.filter((event) => event._id?.toString() !== eventId)
-    );
-
-    // Send event notification
-    const notificationPayload: EventNotificationInput = {
-      calendarId: event.calendarId.toString(),
-      eventTitle: event.title,
-      senderId: user?.uid || "",
-      action: "deleted",
-    };
-
-    await fetch("/api/notifications?type=event", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(notificationPayload),
-    });
-  };
+  //   fetchEvents();
+  // }, []);
 
   return (
     <div
@@ -144,9 +115,7 @@ export default function MultiCalendarView({
           date={date}
           onNavigate={(newDate: Date) => setDate(newDate)}
           onView={(newView: View) => setView(newView)}
-          onSelectEvent={(event: React.SyntheticEvent) =>
-            setSelectedCalendar(null)
-          }
+          onSelectEvent={(event: Event) => setSelectedCalendar(null)}
           eventPropGetter={(event) => ({
             style: {
               backgroundColor: event.color || "blue",

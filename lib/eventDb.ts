@@ -19,13 +19,26 @@ export async function createEvent(eventData: EventInput): Promise<Event> {
 export async function getEventsByUser(userId: string): Promise<Event[]> {
   const client = await clientPromise;
   const db = client.db();
+  // Fetch calendars where the user is a member
 
-  return db
-    .collection("events")
-    .find<Event>({
-      $or: [{ createdBy: userId }, { participants: userId }],
-    })
+  console.log("GETEVENTSBYUSER events for userId:", userId);
+  console.log({ [`members.${userId}`]: { $exists: true } });
+  const calendars = await db
+    .collection("calendar")
+    .find({ [`members.${userId}`]: { $exists: true } })
     .toArray();
+  console.log(calendars);
+
+  console.log("The user is a memeber of these calendars: ", calendars);
+  const calendarIds = calendars.map((calendar) => calendar._id.toString());
+
+  // Fetch events from those calendars
+  const events = await db
+    .collection("events")
+    .find({ calendarId: { $in: calendarIds } })
+    .toArray();
+
+  return events as Event[];
 }
 
 export async function getEventById(eventId: string): Promise<Event | null> {
@@ -59,15 +72,10 @@ export async function getEventsByCalendarIds(
 
 export async function updateEvent(
   eventId: string,
-  eventData: Partial<Event>
+  updateData: Partial<Event>
 ): Promise<Event | null> {
   const client = await clientPromise;
   const db = client.db();
-
-  const updateData = {
-    ...eventData,
-    updatedAt: new Date(),
-  };
 
   const result = await db
     .collection("events")

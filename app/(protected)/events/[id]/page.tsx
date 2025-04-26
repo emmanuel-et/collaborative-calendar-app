@@ -42,7 +42,6 @@ export default function EventPage() {
   const handleSubmit = async (eventData: EventInput) => {
     setIsSubmitting(true);
     setError("");
-
     try {
       const response = await fetch(`/api/events${isEditing ? `/${id}` : ""}`, {
         method: isEditing ? "PUT" : "POST",
@@ -51,18 +50,19 @@ export default function EventPage() {
         },
         body: JSON.stringify(eventData),
       });
+      const responseData = await response.json(); 
+      console.log("API Response:", responseData); 
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Failed to ${isEditing ? "update" : "create"} event`);
+        throw new Error(responseData.error || `Failed to ${isEditing ? "update" : "create"} event`);
       }
 
-      const data = await response.json();
+      const event = responseData;
 
       // Send event notification
       const notificationPayload: EventNotificationInput = {
-        calendarId: data.calendarId,
-        eventTitle: data.title,
+        calendarId: event.calendarId,
+        eventTitle: event.title,
         senderId: user?.uid || "",
         action: isEditing ? "updated" : "created",
       };

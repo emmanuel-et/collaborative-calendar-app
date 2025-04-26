@@ -7,15 +7,17 @@ import { Event } from "@/models/Event";
 import UpcomingEvents from "@/components/event/UpcomingEvents";
 import Link from "next/link";
 import MultiCalendarView from "@/components/calendar/MultiCalendarView";
+import { EventNotificationInput } from "@/models/Notification";
 
 function Dashboard() {
   const { user, loading } = useAuth();
-  const [userProfile, setUserProfile] = useState<User | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [error, setError] = useState("");
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
+  const [events, setEvents] = useState<Event[]>([]);
   const [calendars, setCalendars] = useState([]);
+
   const [loadingCalendar, setLoadingCalendar] = useState(false);
 
   useEffect(() => {
@@ -40,39 +42,113 @@ function Dashboard() {
   }, [user]);
 
   useEffect(() => {
-    const fetchUserProfile = async () => {
-      if (!user?.uid) return;
-
+    const fetchEvents = async () => {
       try {
-        const response = await fetch(`/api/users?uid=${user.uid}`);
-
+        const response = await fetch(`/api/events?userId=${user.uid}`);
         if (!response.ok) {
-          throw new Error("Failed to fetch user profile");
+          throw new Error("Failed to fetch events");
         }
-
-        const data = await response.json();
-        setUserProfile(data);
+        const rawData = (await response.json()) as any[];
+        const data: Event[] = rawData.map((e: any) => ({
+          ...e,
+          startTime: new Date(e.startTime),
+          endTime: new Date(e.endTime),
+          createdAt: new Date(e.createdAt),
+          updatedAt: new Date(e.updatedAt),
+          calendarId: e.calendarId, // Assuming calendarId is already in the correct format
+        }));
+        setEvents(data);
       } catch (err) {
         setError((err as Error).message);
-      } finally {
-        setLoadingProfile(false);
       }
     };
-
-    fetchUserProfile();
+    fetchEvents();
   }, [user]);
 
   const handleEventClick = (event: Event) => {
     setSelectedEvent(event);
   };
 
-  if (loading || loadingProfile || loadingCalendar) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-purple-50 text-purple-800">
-        <p>Loading...</p>
-      </div>
+  const handleUpdateEvent = async (updatedEvent: Event) => {
+    setEvents((prev) =>
+      prev.map((event) =>
+        event._id === updatedEvent._id ? updatedEvent : event
+      )
     );
-  }
+
+    const { _id, ...eventWithoutId } = updatedEvent;
+    const response = await fetch(`/api/events/${_id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        user: user.uid || "",
+      },
+      body: JSON.stringify(eventWithoutId),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || `Failed to update event`);
+    }
+    setSelectedEvent(null);
+  };
+
+  const handleDeleteEvent = async (eventId: string) => {
+    try {
+      // Fetch the event details using the eventId
+      const eventResponse = await fetch(`/api/events/${eventId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        user: user.uid || "",
+      },
+      });
+
+      if (!eventResponse.ok) {
+      const errorData = await eventResponse.json();
+      throw new Error(errorData.error || "Failed to fetch event details");
+      }
+
+      const event: Event = await eventResponse.json();
+
+      // Proceed with deleting the event
+      const response = await fetch(`/api/events/${eventId}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        user: user.uid || "",
+      },
+      });
+
+      if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to delete event");
+      }
+
+      // Update the frontend state to remove the deleted event
+      setEvents((prevEvents) =>
+      prevEvents.filter((event) => event._id?.toString() !== eventId)
+      );
+
+      // Send event notification
+      const notificationPayload: EventNotificationInput = {
+      calendarId: event.calendarId.toString(),
+      eventTitle: event.title,
+      senderId: user?.uid || "",
+      action: "deleted",
+      };
+
+      await fetch("/api/notifications?type=event", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(notificationPayload),
+      });
+    } catch (error) {
+      console.error("Error deleting event:", error);
+      throw error; // Re-throw the error so EventDialog can handle it
+    }
+  };
 
   return (
     <div className="min-h-screen p-6 bg-purple-50 text-purple-800 flex flex-col">
@@ -89,12 +165,17 @@ function Dashboard() {
       <div className="flex flex-1 gap-4">
         <div className="flex-grow-[2] flex flex-col">
           <div className="flex-1">
-            <UpcomingEvents onEventClick={handleEventClick} />
+            <UpcomingEvents onEventClick={handleEventClick} events={events} />
           </div>
         </div>
         <div className="flex-grow-[1] flex flex-col">
           <div className="flex-1">
-            <MultiCalendarView calendars={calendars} />
+            <MultiCalendarView
+              calendars={calendars}
+              events={events}
+              handleDeleteEvent={handleDeleteEvent}
+              handleUpdateEvent={handleUpdateEvent}
+            />
           </div>
         </div>
       </div>

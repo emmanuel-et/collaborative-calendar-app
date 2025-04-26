@@ -73,7 +73,12 @@ export default function CombinedCalendarPage() {
             </div>
             
             <div className="grid flex-1">
-                <MultiCalendarView calendars={calendars} />
+                <MultiCalendarView
+                    calendars={calendars}
+                    events={events}
+                    handleDeleteEvent={handleDeleteEvent}
+                    handleUpdateEvent={handleUpdateEvent}
+                />
             </div>
         </div>
     )

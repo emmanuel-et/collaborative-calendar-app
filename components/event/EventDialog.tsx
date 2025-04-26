@@ -30,24 +30,32 @@ const EventDialog: React.FC<EventDialogProps> = ({
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const router = useRouter();
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   if (!event) return null;
 
   const handleUpdate = (updatedEventData: Partial<Event>) => {
     const updatedEvent = { ...event, ...updatedEventData };
+    console.log("govadia", updatedEvent);
     onUpdate(updatedEvent);
     setIsEditing(false);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (confirm("Are you sure you want to delete this event?")) {
-      onDelete(event);
-      onClose();
+      try {
+        await onDelete(event._id?.toString() || "");
+        onClose();
+      } catch (error: any) {
+        if (error.response?.status === 403) {
+          setErrorMessage("You don't have permission to delete events in this calendar.");
+        } else {
+          setErrorMessage(
+            error.message || "An error occurred while deleting the event."
+          );
+        }
+      }
     }
-  };
-
-  const handleExpand = () => {
-    router.push(`/events/${event._id}`);
   };
 
   return (
@@ -63,6 +71,12 @@ const EventDialog: React.FC<EventDialogProps> = ({
               : "View the details of your event. You can edit or delete it if needed."}
           </DialogDescription>
         </DialogHeader>
+        {/* Display error message */}
+        {errorMessage && (
+          <div className="mb-4 p-2 bg-red-100 text-red-800 rounded">
+            {errorMessage}
+          </div>
+        )}
         <div className="grid gap-4 py-4">
           {isEditing ? (
             <EventForm
@@ -123,13 +137,6 @@ const EventDialog: React.FC<EventDialogProps> = ({
               </Button>
             </>
           )}
-          {/* <Button
-            type="button"
-            onClick={onClose}
-            className="bg-gray-300 text-gray-800 hover:bg-gray-400"
-          >
-            Close
-          </Button> */}
         </DialogFooter>
       </DialogContent>
     </Dialog>
