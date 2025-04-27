@@ -1,11 +1,6 @@
 import { Event } from "@/models/Event";
 
-/**
- * 
- * @param event1 First event 
- * @param event2 Second event 
- * @returns true if events overlap
- */
+
 export function doEventsOverlap(event1: any, event2: any): boolean {
   const start1 = new Date(event1.startTime).getTime();
   const end1 = new Date(event1.endTime).getTime();
