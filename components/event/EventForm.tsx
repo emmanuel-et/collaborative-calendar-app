@@ -3,13 +3,17 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { EventInput } from "@/models/Event";
+import { EventInput, Event } from "@/models/Event";
 import { Calendar, CalendarRole } from "@/models/Calendar";
+import { findConflictingEvents } from "@/lib/eventConflictCheck";
+
+// Define a type that can handle both string and ObjectId
+type IdType = string | { toString: () => string };
 
 interface EventFormProps {
   calendarId?: string;
   onSubmit: (event: EventInput) => void;
-  initialData?: Partial<EventInput>;
+  initialData?: Partial<EventInput & { _id?: IdType }>;
   isEdit?: boolean;
 }
 
@@ -39,6 +43,9 @@ const EventForm: React.FC<EventFormProps> = ({
   const [selectedCalendarIdx, setSelectedCalendarIdx] = useState(-1);
   const [calendars, setCalendars] = useState<Calendar[]>([]);
   const [error, setError] = useState("");
+  const [conflicts, setConflicts] = useState<Event[]>([]);
+  const [existingEvents, setExistingEvents] = useState<Event[]>([]);
+  const [isCheckingConflicts, setIsCheckingConflicts] = useState(false);
 
   useEffect(() => {
     const fetchCalendars = async () => {
@@ -76,6 +83,79 @@ const EventForm: React.FC<EventFormProps> = ({
 
     fetchCalendars();
   }, [user, calendarId]);
+
+  // Fetch existing events for the selected calendar
+  useEffect(() => {
+    const fetchExistingEvents = async () => {
+      if (selectedCalendarIdx < 0 || !calendars[selectedCalendarIdx]?._id) return;
+      
+      try {
+        const response = await fetch(`/api/events?calendarId=${calendars[selectedCalendarIdx]._id}`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch existing events");
+        }
+        const data = await response.json();
+        setExistingEvents(data);
+      } catch (err) {
+        console.error("Error fetching existing events:", err);
+      }
+    };
+
+    fetchExistingEvents();
+  }, [selectedCalendarIdx, calendars]);
+
+  // Check for conflicts when relevant fields change
+  useEffect(() => {
+    const checkConflicts = () => {
+      if (!startTime || !endTime || selectedCalendarIdx < 0 || !calendars[selectedCalendarIdx]?._id) {
+        setConflicts([]);
+        return;
+      }
+
+      setIsCheckingConflicts(true);
+      
+      const startDate = new Date(startTime);
+      const endDate = new Date(endTime);
+      
+      if (endDate <= startDate) {
+        setConflicts([]);
+        setIsCheckingConflicts(false);
+        return;
+      }
+
+      // Handle both string and ObjectId types for _id
+      const eventId = initialData._id 
+        ? (typeof initialData._id === 'string' 
+            ? initialData._id 
+            : initialData._id.toString())
+        : undefined;
+
+      const newEvent = {
+        _id: isEdit && eventId ? eventId : undefined,
+        calendarId: calendars[selectedCalendarIdx]._id.toString(),
+        title: title || "New Event",
+        description: description,
+        startTime: startDate,
+        endTime: endDate,
+        location: location,
+        createdBy: user?.uid || "",
+        participants: [user?.uid || ""],
+        isAllDay: isAllDay,
+        color: color,
+        priority: priority,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const conflictingEvents = findConflictingEvents(newEvent, existingEvents);
+      setConflicts(conflictingEvents);
+      setIsCheckingConflicts(false);
+    };
+
+    // Debounce the conflict check to avoid too many checks while typing
+    const timeoutId = setTimeout(checkConflicts, 500);
+    return () => clearTimeout(timeoutId);
+  }, [startTime, endTime, selectedCalendarIdx, calendars, title, description, location, isAllDay, color, priority, isEdit, initialData, user?.uid, existingEvents]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,7 +215,7 @@ const EventForm: React.FC<EventFormProps> = ({
       color,
       priority,
       createdBy: user?.uid || "",
-      participants: [user?.uid || ""], // Initially just the creator
+      participants: [user?.uid || ""],
     };
 
     onSubmit(eventData);
@@ -144,6 +224,31 @@ const EventForm: React.FC<EventFormProps> = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && <p className="text-red-500">{error}</p>}
+      
+      
+      {conflicts.length > 0 && (
+        <div className="p-3 bg-yellow-100 text-yellow-800 rounded-md">
+          <p className="font-medium">Warning: This event conflicts with {conflicts.length} existing event(s).</p>
+          <p className="text-sm mt-1">
+            {conflicts.some(event => (event.priority || 3) > (priority || 3)) 
+              ? "Events with lower priority cannot be scheduled at overlapping times."
+              : "Events with higher or equal priority can be scheduled, but higher priority events will take precedence."}
+          </p>
+          <ul className="mt-2 text-sm list-disc pl-4">
+            {conflicts.slice(0, 3).map((event, index) => (
+              <li key={index}>
+                {event.title} ({new Date(event.startTime).toLocaleString()} - {new Date(event.endTime).toLocaleString()})
+                {event.priority === priority 
+                  ? " (Same Priority)" 
+                  : (event.priority || 3) > (priority || 3) 
+                    ? " (Higher Priority)" 
+                    : " (Lower Priority)"}
+              </li>
+            ))}
+            {conflicts.length > 3 && <li>...and {conflicts.length - 3} more</li>}
+          </ul>
+        </div>
+      )}
 
       <div>
         <label htmlFor="calendar" className="block text-sm font-medium mb-1">
@@ -206,10 +311,10 @@ const EventForm: React.FC<EventFormProps> = ({
             className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
           />
           <span className="text-sm font-medium">
-            {priority === 5 ? "Highest" : 
-             priority === 4 ? "High" : 
+            {priority === 1 ? "Lowest" : 
+             priority === 2 ? "Low" : 
              priority === 3 ? "Medium" : 
-             priority === 2 ? "Low" : "Lowest"}
+             priority === 4 ? "High" : "Highest"}
           </span>
         </div>
       </div>

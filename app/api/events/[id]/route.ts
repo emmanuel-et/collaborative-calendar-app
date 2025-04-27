@@ -3,6 +3,8 @@ import { getEventById, updateEvent, deleteEvent } from "@/lib/db";
 import { getUserFromRequest } from "@/lib/userDb";
 import { getCalendarById } from "@/lib/calendarDb";
 import { Event } from "@/models/Event";
+import { findConflictingEvents } from "@/lib/eventConflictCheck";
+import { getEventsByCalendar } from "@/lib/eventDb";
 
 // GET /api/events/[id]
 export async function GET(
@@ -31,19 +33,90 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = await params;
-    const authResponse = await authenticate(request, id);
-    if (authResponse) {
-      return authResponse; // Return the authentication error response
+    const { id } = params;
+    const user = await getUserFromRequest(request);
+    
+    if (!user) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
     }
-    const updateData: Partial<Event> = await request.json();
-    // Fetch the event to ensure it exists
+
+    // Get the existing event
     const existingEvent = await getEventById(id);
     if (!existingEvent) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
-    const updatedEvent = await updateEvent(id, updateData);
-    return NextResponse.json(updatedEvent);
+
+    // Get the calendar to check permissions
+    const calendar = await getCalendarById(existingEvent.calendarId.toString());
+    if (!calendar) {
+      return NextResponse.json({ error: "Calendar not found" }, { status: 404 });
+    }
+
+    // Check if user has permission to update the event
+    const userRole = calendar.members[user.uid];
+    if (!userRole || !["editor", "owner"].includes(userRole)) {
+      return NextResponse.json(
+        { error: "You don't have permission to update events in this calendar" },
+        { status: 403 }
+      );
+    }
+
+    const updatedData = await request.json();
+  
+    const calendarEvents = await getEventsByCalendar(existingEvent.calendarId.toString());
+    
+    
+    const updatedEvent = {
+      ...existingEvent,
+      ...updatedData,
+      _id: existingEvent._id,
+      calendarId: existingEvent.calendarId,
+      createdAt: existingEvent.createdAt,
+      updatedAt: new Date(),
+    };
+ 
+    const conflictingEvents = findConflictingEvents(
+      updatedEvent,
+      calendarEvents
+    );
+    
+   
+    if (conflictingEvents.length > 0) {
+     
+      const higherPriorityConflicts = conflictingEvents.filter(
+        (event) => {
+
+          const eventPriority = event.priority || 3; // Default to medium priority if undefined
+          const newEventPriority = updatedEvent.priority || 3; // Default to medium priority if undefined
+          return eventPriority > newEventPriority; 
+        }
+      );
+      
+      if (higherPriorityConflicts.length > 0) {
+        return NextResponse.json(
+          {
+            error: "Cannot update event: conflicts with existing events of higher priority",
+            conflicts: higherPriorityConflicts,
+          },
+          { status: 409 } // 409 Conflict
+        );
+      }
+      
+      
+      const updatedEventResult = await updateEvent(id, updatedData);
+      return NextResponse.json({
+        ...updatedEventResult,
+        warning: "Event updated with conflicts with lower or equal priority events",
+        conflicts: conflictingEvents,
+      });
+    }
+
+    // Update the event
+    const updatedEventResult = await updateEvent(id, updatedData);
+    return NextResponse.json(updatedEventResult);
   } catch (error) {
     console.error("Error updating event:", error);
     return NextResponse.json(
@@ -59,53 +132,45 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const authResponse = await authenticate(request, params.id);
-    if (authResponse) {
-      return authResponse; // Return the authentication error response
+    const { id } = params;
+    const user = await getUserFromRequest(request);
+    
+    if (!user) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
     }
-    const { id } = await params;
-    const success = await deleteEvent(id);
-    if (!success) {
+
+    // Get the event to check permissions
+    const event = await getEventById(id);
+    if (!event) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true }, { status: 200 });
+    // Get the calendar to check permissions
+    const calendar = await getCalendarById(event.calendarId.toString());
+    if (!calendar) {
+      return NextResponse.json({ error: "Calendar not found" }, { status: 404 });
+    }
+
+    // Check if user has permission to delete the event
+    const userRole = calendar.members[user.uid];
+    if (!userRole || !["editor", "owner"].includes(userRole)) {
+      return NextResponse.json(
+        { error: "You don't have permission to delete events in this calendar" },
+        { status: 403 }
+      );
+    }
+
+    // Delete the event
+    await deleteEvent(id);
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting event:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
-    );
-  }
-}
-
-export async function authenticate(request: NextRequest, id: string) {
-  const user = await getUserFromRequest(request);
-
-  if (!user) {
-    return NextResponse.json(
-      { error: "Authentication failed: Invalid permissions" },
-      { status: 403 }
-    );
-  }
-  // Fetch event
-  const event = await getEventById(id);
-  if (!event) {
-    return NextResponse.json({ error: "Event not found" }, { status: 404 });
-  }
-  // Fetch calendar
-  const calendar = await getCalendarById(event.calendarId.toString()); // Fetch the calendar object
-  if (!calendar) {
-    return NextResponse.json({ error: "Calendar not found" }, { status: 404 });
-  }
-  // Check if user is a member of the calendar with editor or owner role
-  const userRole = calendar.members[user.uid];
-  if (!userRole || !["editor", "owner"].includes(userRole)) {
-    return NextResponse.json(
-      {
-        error: "You do not have permission to delete events in this calendar.",
-      },
-      { status: 403 }
     );
   }
 }
