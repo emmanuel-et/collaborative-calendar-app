@@ -89,8 +89,8 @@ export async function PATCH(
       const higherPriorityConflicts = conflictingEvents.filter(
         (event) => {
 
-          const eventPriority = event.priority || 3; // Default to medium priority if undefined
-          const newEventPriority = updatedEvent.priority || 3; // Default to medium priority if undefined
+          const eventPriority = event.priority || 3;
+          const newEventPriority = updatedEvent.priority || 3; 
           return eventPriority > newEventPriority; 
         }
       );
@@ -101,7 +101,7 @@ export async function PATCH(
             error: "Cannot update event: conflicts with existing events of higher priority",
             conflicts: higherPriorityConflicts,
           },
-          { status: 409 } // 409 Conflict
+          { status: 409 } 
         );
       }
       
