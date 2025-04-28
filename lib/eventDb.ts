@@ -65,6 +65,27 @@ export async function getEventsByCalendarIds(
     .toArray();
 }
 
+export async function getConflictingEvents(startTime: Date, endTime: Date, calendarIds: string[]): Promise<Event[]> {
+  const client = await clientPromise;
+  const db = client.db();
+
+  const startString = startTime.toISOString();
+  const endString = endTime.toISOString();
+
+  return db
+    .collection("events")
+    .find<Event>({
+      calendarId: { $in: calendarIds },
+      $or: [
+        { startTime: { $gte: startString, $lt: endString } },
+        { endTime: { $gt: startString, $lte: endString } },
+        { $and: [{ startString: { $lt: startString } }, { endString: { $gt: endString } }] },
+      ],
+    })
+    .toArray();
+
+}
+
 export async function updateEvent(
   eventId: string,
   updateData: Partial<Event>

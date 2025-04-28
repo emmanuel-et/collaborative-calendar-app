@@ -2,7 +2,7 @@ import { ObjectId } from "mongodb";
 
 export interface Event {
   _id?: ObjectId;
-  calendarId: ObjectId;
+  calendarId: string;
   title: string;
   description?: string;
   startTime: Date;

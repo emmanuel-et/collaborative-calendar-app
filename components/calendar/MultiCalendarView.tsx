@@ -7,13 +7,11 @@ import {
 } from "react-big-calendar";
 import { Calendar } from "@/models/Calendar";
 import moment from "moment";
-import { use, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, useMemo } from "react";
 import { Event } from "@/models/Event";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import EventDialog from "@/components/event/EventDialog";
-import { EventNotificationInput } from "@/models/Notification";
-import { useAuth } from "@/hooks/useAuth";
+import { separateConflicts } from "@/lib/eventConflictCheck";
 
 interface MultiCalendarViewProps {
   calendars: Calendar[];
@@ -28,8 +26,14 @@ export default function MultiCalendarView({
   handleUpdateEvent,
   handleDeleteEvent,
 }: MultiCalendarViewProps) {
-  const { user } = useAuth();
-  const router = useRouter();
+
+  const { higherPriorityEvents, lowerPriorityEvents } = useMemo(() => separateConflicts(events), [events]);
+  console.log("Higher Priority Events:", higherPriorityEvents);
+  console.log("Lower Priority Events:", lowerPriorityEvents);
+  const [hoveredEvent, setHoveredEvent] = useState<Event | null>(null);
+  const [selectedCalendar, setSelectedCalendar] = useState<Calendar | null>(
+    null
+  );
   const calendarStringIds = calendars
     .map((calendar) => calendar._id?.toString())
     .filter((id) => id !== undefined);
@@ -37,9 +41,6 @@ export default function MultiCalendarView({
   const localizer = momentLocalizer(moment);
   const [view, setView] = useState<View>("month");
   const [date, setDate] = useState(new Date());
-  // const [events, setEvents] = useState<Event[]>([]);
-  const [hoveredEvent, setHoveredEvent] = useState<Object | null>(null);
-  const [selectedCalendar, setSelectedCalendar] = useState<string | null>(null);
   const [visibleCalendars, setVisibleCalendars] = useState<
     Record<string, boolean>
   >(
@@ -50,7 +51,6 @@ export default function MultiCalendarView({
   );
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-  //const { user } = useAuth();
   const toggleCalendarVisibility = (calendarId: string) => {
     setVisibleCalendars((prev) => ({
       ...prev,
@@ -71,8 +71,8 @@ export default function MultiCalendarView({
     toggleAllCalendars(true);
   }, [calendars]);
 
-  const getVisibleEvents = () => {
-    return events.filter((event: any) => visibleCalendars[event.calendarId]);
+  const getVisibleEvents = (eventsArr: Event[]) => {
+    return eventsArr.filter((event: any) => visibleCalendars[event.calendarId]);
   };
 
   // useEffect(() => {
@@ -108,20 +108,31 @@ export default function MultiCalendarView({
       <div>
         <BigCalendar
           localizer={localizer}
-          events={getVisibleEvents()}
+          events={getVisibleEvents(events)}
           startAccessor="startTime"
           endAccessor="endTime"
           view={view}
           date={date}
           onNavigate={(newDate: Date) => setDate(newDate)}
           onView={(newView: View) => setView(newView)}
-          onSelectEvent={(event: Event) => setSelectedCalendar(null)}
-          eventPropGetter={(event) => ({
-            style: {
-              backgroundColor: event.color || "blue",
-              color: "white",
-            },
-          })}
+          onSelectEvent={(event: Event) => setSelectedEvent(event)}
+          eventPropGetter={(event) => {
+            const isBackgroundEvent = lowerPriorityEvents.some(
+              (bgEvent) => bgEvent._id === event._id
+            );
+            return {
+              style: {
+                filter: isBackgroundEvent ? "grayscale(0.7)" : "none", // Blur effect for background events
+                opacity: isBackgroundEvent ? 0.4 : 1, // Additional transparency for background events
+                backgroundColor: event.color || "#3174ad",
+                color: "white",
+                borderRadius: "2px",
+                paddingTop: "2px",
+                paddingBottom: "2px",
+                display: "block",
+              },
+            };
+          }}
           onSelectSlot={(slotInfo: Object) => setHoveredEvent(slotInfo)}
           components={{
             event: ({ event }) => (
@@ -132,12 +143,6 @@ export default function MultiCalendarView({
                 <span>
                   {(event.title?.trim() && event.title.trim()) || "[No name]"}
                 </span>
-                {/* <button
-                  onClick={() => setSelectedEvent(event)}
-                  className="absolute top-0 right-0 hidden group-hover:block px-2 py-1 bg-blue-600 text-white text-xs rounded"
-                >
-                  View
-                </button> */}
               </div>
             ),
           }}
@@ -146,7 +151,10 @@ export default function MultiCalendarView({
           <EventDialog
             event={selectedEvent}
             onClose={() => setSelectedEvent(null)}
-            onUpdate={handleUpdateEvent}
+            onUpdate={(newEvent) => {
+              setSelectedEvent(newEvent);
+              handleUpdateEvent(newEvent);
+            }}
             onDelete={handleDeleteEvent}
           />
         )}

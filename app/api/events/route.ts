@@ -65,51 +65,51 @@ export async function POST(request: NextRequest) {
     }
 
   
-    const existingEvents = await getEventsByCalendar(eventData.calendarId);
+    // const existingEvents = await getEventsByCalendar(eventData.calendarId);
   
-    const tempEvent = {
-      ...eventData,
-      _id: undefined,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      calendarId: eventData.calendarId,
-    };
+    // const tempEvent = {
+    //   ...eventData,
+    //   _id: undefined,
+    //   createdAt: new Date(),
+    //   updatedAt: new Date(),
+    //   calendarId: eventData.calendarId,
+    // };
     
-    const conflictingEvents = findConflictingEvents(
-      tempEvent,
-      existingEvents
-    );
+    // const conflictingEvents = findConflictingEvents(
+    //   tempEvent,
+    //   existingEvents
+    // );
     
-    if (conflictingEvents.length > 0) {
+    // if (conflictingEvents.length > 0) {
  
-      const higherPriorityConflicts = conflictingEvents.filter(
-        (event) => {
+    //   const higherPriorityConflicts = conflictingEvents.filter(
+    //     (event) => {
     
-          const eventPriority = event.priority || 3; 
-          const newEventPriority = eventData.priority || 3; // Default to medium priority if undefined
-          return eventPriority > newEventPriority; // conflicts
-        }
-      );
+    //       const eventPriority = event.priority || 3; 
+    //       const newEventPriority = eventData.priority || 3; // Default to medium priority if undefined
+    //       return eventPriority > newEventPriority; // conflicts
+    //     }
+    //   );
       
     
-      if (higherPriorityConflicts.length > 0) {
-        return NextResponse.json(
-          {
-            error: "Cannot create event: conflicts with existing events of higher priority",
-            conflicts: higherPriorityConflicts,
-          },
-          { status: 409 } 
-        );
-      }
-      
-   
-      const newEvent = await createEvent(eventData);
-      return NextResponse.json({
-        ...newEvent,
-        warning: "Event created with conflicts with lower or equal priority events",
-        conflicts: conflictingEvents,
-      }, { status: 201 });
-    }
+    //   if (higherPriorityConflicts.length > 0) {
+    //     return NextResponse.json(
+    //       {
+    //         error: "Cannot create event: conflicts with existing events of higher priority",
+    //         conflicts: higherPriorityConflicts,
+    //       },
+    //       { status: 409 } 
+    //     );
+    //   }
+    // 
+    //  
+    //   const newEvent = await createEvent(eventData);
+    //   return NextResponse.json({
+    //     ...newEvent,
+    //     warning: "Event created with conflicts with lower or equal priority events",
+    //     conflicts: conflictingEvents,
+    //   }, { status: 201 });
+    // }
 
     // Create new event
     const newEvent = await createEvent(eventData);

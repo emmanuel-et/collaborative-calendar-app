@@ -66,53 +66,53 @@ export async function PATCH(
 
     const updatedData = await request.json();
   
-    const calendarEvents = await getEventsByCalendar(existingEvent.calendarId.toString());
+    // const calendarEvents = await getEventsByCalendar(existingEvent.calendarId.toString());
     
     
-    const updatedEvent = {
-      ...existingEvent,
-      ...updatedData,
-      _id: existingEvent._id,
-      calendarId: existingEvent.calendarId,
-      createdAt: existingEvent.createdAt,
-      updatedAt: new Date(),
-    };
+    // const updatedEvent = {
+    //   ...existingEvent,
+    //   ...updatedData,
+    //   _id: existingEvent._id,
+    //   calendarId: existingEvent.calendarId,
+    //   createdAt: existingEvent.createdAt,
+    //   updatedAt: new Date(),
+    // };
  
-    const conflictingEvents = findConflictingEvents(
-      updatedEvent,
-      calendarEvents
-    );
+    // const conflictingEvents = findConflictingEvents(
+    //   updatedEvent,
+    //   calendarEvents
+    // );
     
    
-    if (conflictingEvents.length > 0) {
+    // if (conflictingEvents.length > 0) {
      
-      const higherPriorityConflicts = conflictingEvents.filter(
-        (event) => {
+    //   const higherPriorityConflicts = conflictingEvents.filter(
+    //     (event) => {
 
-          const eventPriority = event.priority || 3;
-          const newEventPriority = updatedEvent.priority || 3; 
-          return eventPriority > newEventPriority; 
-        }
-      );
+    //       const eventPriority = event.priority || 3;
+    //       const newEventPriority = updatedEvent.priority || 3; 
+    //       return eventPriority > newEventPriority; 
+    //     }
+    //   );
       
-      if (higherPriorityConflicts.length > 0) {
-        return NextResponse.json(
-          {
-            error: "Cannot update event: conflicts with existing events of higher priority",
-            conflicts: higherPriorityConflicts,
-          },
-          { status: 409 } 
-        );
-      }
+    //   if (higherPriorityConflicts.length > 0) {
+    //     return NextResponse.json(
+    //       {
+    //         error: "Cannot update event: conflicts with existing events of higher priority",
+    //         conflicts: higherPriorityConflicts,
+    //       },
+    //       { status: 409 } 
+    //     );
+    //   }
       
       
-      const updatedEventResult = await updateEvent(id, updatedData);
-      return NextResponse.json({
-        ...updatedEventResult,
-        warning: "Event updated with conflicts with lower or equal priority events",
-        conflicts: conflictingEvents,
-      });
-    }
+    //   const updatedEventResult = await updateEvent(id, updatedData);
+    //   return NextResponse.json({
+    //     ...updatedEventResult,
+    //     warning: "Event updated with conflicts with lower or equal priority events",
+    //     conflicts: conflictingEvents,
+    //   });
+    // }
 
     // Update the event
     const updatedEventResult = await updateEvent(id, updatedData);

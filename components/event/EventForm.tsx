@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { EventInput, Event } from "@/models/Event";
 import { Calendar, CalendarRole } from "@/models/Calendar";
-import { findConflictingEvents } from "@/lib/eventConflictCheck";
+import moment from "moment";
 
 // Define a type that can handle both string and ObjectId
 type IdType = string | { toString: () => string };
@@ -28,12 +28,12 @@ const EventForm: React.FC<EventFormProps> = ({
   const [description, setDescription] = useState(initialData.description || "");
   const [startTime, setStartTime] = useState(
     initialData.startTime
-      ? new Date(initialData.startTime).toISOString().slice(0, 16)
+      ? moment(initialData.startTime).format("YYYY-MM-DDTHH:mm:ss")
       : ""
   );
   const [endTime, setEndTime] = useState(
     initialData.endTime
-      ? new Date(initialData.endTime).toISOString().slice(0, 16)
+      ? moment(initialData.endTime).format("YYYY-MM-DDTHH:mm:ss")
       : ""
   );
   const [location, setLocation] = useState(initialData.location || "");
@@ -44,8 +44,6 @@ const EventForm: React.FC<EventFormProps> = ({
   const [calendars, setCalendars] = useState<Calendar[]>([]);
   const [error, setError] = useState("");
   const [conflicts, setConflicts] = useState<Event[]>([]);
-  const [existingEvents, setExistingEvents] = useState<Event[]>([]);
-  const [isCheckingConflicts, setIsCheckingConflicts] = useState(false);
 
   useEffect(() => {
     const fetchCalendars = async () => {
@@ -85,77 +83,87 @@ const EventForm: React.FC<EventFormProps> = ({
   }, [user, calendarId]);
 
   // Fetch existing events for the selected calendar
-  useEffect(() => {
-    const fetchExistingEvents = async () => {
-      if (selectedCalendarIdx < 0 || !calendars[selectedCalendarIdx]?._id) return;
+  // useEffect(() => {
+  //   const fetchExistingEvents = async () => {
+  //     if (selectedCalendarIdx < 0 || !calendars[selectedCalendarIdx]?._id) return;
       
-      try {
-        const response = await fetch(`/api/events?calendarId=${calendars[selectedCalendarIdx]._id}`);
-        if (!response.ok) {
-          throw new Error("Failed to fetch existing events");
-        }
-        const data = await response.json();
-        setExistingEvents(data);
-      } catch (err) {
-        console.error("Error fetching existing events:", err);
-      }
-    };
+  //     try {
+  //       const response = await fetch(`/api/events?calendarId=${calendars[selectedCalendarIdx]._id}`);
+  //       if (!response.ok) {
+  //         throw new Error("Failed to fetch existing events");
+  //       }
+  //       const data = await response.json();
+  //       setExistingEvents(data);
+  //     } catch (err) {
+  //       console.error("Error fetching existing events:", err);
+  //     }
+  //   };
 
-    fetchExistingEvents();
-  }, [selectedCalendarIdx, calendars]);
+  //   fetchExistingEvents();
+  // }, [selectedCalendarIdx, calendars]);
 
   // Check for conflicts when relevant fields change
   useEffect(() => {
-    const checkConflicts = () => {
+    const checkConflicts = async() => {
       if (!startTime || !endTime || selectedCalendarIdx < 0 || !calendars[selectedCalendarIdx]?._id) {
         setConflicts([]);
         return;
       }
 
-      setIsCheckingConflicts(true);
+      // setIsCheckingConflicts(true);
       
       const startDate = new Date(startTime);
       const endDate = new Date(endTime);
       
       if (endDate <= startDate) {
         setConflicts([]);
-        setIsCheckingConflicts(false);
+        // setIsCheckingConflicts(false);
         return;
       }
 
       // Handle both string and ObjectId types for _id
-      const eventId = initialData._id 
-        ? (typeof initialData._id === 'string' 
-            ? initialData._id 
-            : initialData._id.toString())
-        : undefined;
+      // const eventId = initialData._id 
+      //   ? (typeof initialData._id === 'string' 
+      //       ? initialData._id 
+      //       : initialData._id.toString())
+      //   : undefined;
 
-      const newEvent = {
-        _id: isEdit && eventId ? eventId : undefined,
-        calendarId: calendars[selectedCalendarIdx]._id.toString(),
-        title: title || "New Event",
-        description: description,
-        startTime: startDate,
-        endTime: endDate,
-        location: location,
-        createdBy: user?.uid || "",
-        participants: [user?.uid || ""],
-        isAllDay: isAllDay,
-        color: color,
-        priority: priority,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+      // const newEvent = {
+      //   _id: isEdit && eventId ? eventId : undefined,
+      //   calendarId: calendars[selectedCalendarIdx]._id.toString(),
+      //   title: title || "New Event",
+      //   description: description,
+      //   startTime: startDate,
+      //   endTime: endDate,
+      //   location: location,
+      //   createdBy: user?.uid || "",
+      //   participants: [user?.uid || ""],
+      //   isAllDay: isAllDay,
+      //   color: color,
+      //   priority: priority,
+      //   createdAt: new Date(),
+      //   updatedAt: new Date(),
+      // };
 
-      const conflictingEvents = findConflictingEvents(newEvent, existingEvents);
+      // const conflictingEvents = findConflictingEvents(newEvent, existingEvents);
+      const conflictRequest = await fetch(
+        `/api/events/conflict?calendarIds=${calendars[selectedCalendarIdx]._id}&startTime=${new Date(startTime).toISOString()}&endTime=${new Date(endTime).toISOString()}`
+      );
+      const unfilteredconflictingEvents = await conflictRequest.json()
+      if (!unfilteredconflictingEvents) {
+        setError("Failed to fetch conflicting events");
+        return;
+      }
+      const conflictingEvents = unfilteredconflictingEvents.filter((event: Event) => event._id !== initialData._id);
+      console.log("Conflicting Events:", unfilteredconflictingEvents);
       setConflicts(conflictingEvents);
-      setIsCheckingConflicts(false);
+      // setIsCheckingConflicts(false);
     };
 
     // Debounce the conflict check to avoid too many checks while typing
     const timeoutId = setTimeout(checkConflicts, 500);
     return () => clearTimeout(timeoutId);
-  }, [startTime, endTime, selectedCalendarIdx, calendars, title, description, location, isAllDay, color, priority, isEdit, initialData, user?.uid, existingEvents]);
+  }, [startTime, endTime, selectedCalendarIdx, isAllDay, initialData, priority, user?.uid]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -206,14 +214,14 @@ const EventForm: React.FC<EventFormProps> = ({
     // Create event data
     const eventData: EventInput = {
       calendarId: calendars[selectedCalendarIdx]._id?.toString(),
-      title,
-      description,
+      title: title,
+      description: description,
       startTime: startDate,
       endTime: endDate,
-      location,
-      isAllDay,
-      color,
-      priority,
+      location: location,
+      isAllDay: isAllDay,
+      color: color,
+      priority: priority,
       createdBy: user?.uid || "",
       participants: [user?.uid || ""],
     };
