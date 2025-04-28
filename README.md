@@ -22,10 +22,18 @@ This project is a cloud-based, real-time collaborative calendar platform designe
 > [Firebase Setup Guide](https://firebase.google.com/docs/web/setup)
 
 ### Sample Data
-We generate our own data off actual users interacting with the app, below our screenshots of sample data from our databases:
-- *TODO*
+We generate our own data off actual users interacting with the app, below are screenshots of sample data from our databases:
+<img width="1512" alt="EventsDB" src="https://github.com/user-attachments/assets/2d39f16a-d665-46fa-9828-ac8b11bef5c0" />
+Events Data
 
----
+<img width="1512" alt="UsersDB" src="https://github.com/user-attachments/assets/977da094-5bff-4c6f-87b4-b6c95dc7ff41" />
+User Profiles Data
+
+<img width="1512" alt="CalendarDB" src="https://github.com/user-attachments/assets/e1c7670c-9641-4c05-957a-04cd4adf88fc" />
+Calendar Data
+
+<img width="1512" alt="NotifsDB" src="https://github.com/user-attachments/assets/a7bc14eb-919e-4377-853a-02496c849c38" />
+Notifications Data
 
 ## Application and Code Setup
 
@@ -87,7 +95,31 @@ We generate our own data off actual users interacting with the app, below our sc
 ---
 
 ## Sample Screenshots
-- *TODO*
+
+<img width="1500" alt="CreateAccount" src="https://github.com/user-attachments/assets/82a46b5c-4857-476f-a170-22e341bfcae3" />
+
+Sign Up Page
+
+![CreateEvent](https://github.com/user-attachments/assets/051e718b-6516-4e96-b2b5-7bfc73fb42ab)
+Create an event
+
+<img width="1505" alt="Dashboard" src="https://github.com/user-attachments/assets/efb78581-44f7-4e1d-a424-6b030f2658ec" />
+
+Your Dashboard
+
+<img width="1512" alt="CalendarsPage" src="https://github.com/user-attachments/assets/a784b917-c28c-496f-95ae-e621c8246d08" />
+
+View your calendars
+
+
+<img width="1512" alt="Notifs" src="https://github.com/user-attachments/assets/781fab51-4676-4d95-b3e2-72aa46e4fb4c" />
+
+View your notifications
+
+
+<img width="1512" alt="Conflict" src="https://github.com/user-attachments/assets/b75a1e11-ece5-4927-906d-47977528aaaf" />
+
+Warning of conflicting events
 
 ---
 
